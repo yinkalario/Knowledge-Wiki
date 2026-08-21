@@ -1,42 +1,42 @@
 # Knowledge_Wiki Schema v1
 
-> 本文件是 Knowledge_Wiki 的权威知识模型。若 README、agent adapter 或旧设计材料与本文件冲突，以本文件和 `WORKFLOW.md` 为准。
+> This file is the authoritative knowledge model for Knowledge_Wiki. If a README, agent adapter, or historical design document conflicts with this file, this file and `WORKFLOW.md` take precedence.
 
-## 1. 系统边界
+## 1. System boundary
 
-Knowledge_Wiki 保存长期、可复用、可追溯的知识。它不是任务管理器、日记、聊天记录仓库、书签堆或 PDF 文件柜。
+Knowledge_Wiki stores durable, reusable, and traceable knowledge. It is not a task manager, diary, chat archive, bookmark pile, or PDF filing cabinet.
 
-长期资产分为三类：
+There are three classes of durable assets:
 
-- `raw/`：不可静默覆盖的原始证据；它证明“某来源当时说了什么”，不等于世界事实。
-- `wiki/`：由 agent 编译、持续更新的当前知识。
-- `_system/`：vendor-neutral 的协议、状态和 bookkeeping。
+- `raw/`: original evidence that must not be silently overwritten. It establishes what a source said at a particular time; it does not by itself establish truth.
+- `wiki/`: current knowledge compiled and continuously maintained by an agent.
+- `_system/`: vendor-neutral protocol, state, and bookkeeping.
 
-Agent history、cache、hidden memory、embeddings 和派生索引均不是权威状态。
+Agent history, caches, hidden memory, embeddings, and derived indexes are not authoritative state.
 
-## 2. 页面类型
+## 2. Page types
 
-v1 只有五种普通知识页面。
+v1 defines only five ordinary knowledge page types.
 
-| Type | 目录 | 用途 |
+| Type | Directory | Purpose |
 |---|---|---|
-| `source` | `wiki/sources/` | 值得独立保留的单一来源 reading note；不是 raw evidence |
-| `concept` | `wiki/concepts/` | 跨来源累积的定义、机制、方法或理论 |
-| `entity` | `wiki/entities/` | 持续重要的模型、数据集、工具、人物或组织 |
-| `question` | `wiki/questions/` | 持续存在、值得积累证据的研究问题 |
-| `synthesis` | `wiki/syntheses/` | 跨来源比较、总体判断和高层理解 |
+| `source` | `wiki/sources/` | A reusable reading note for one source; it is not raw evidence |
+| `concept` | `wiki/concepts/` | A definition, mechanism, method, or theory accumulated across sources |
+| `entity` | `wiki/entities/` | A persistently important model, dataset, tool, person, or organization |
+| `question` | `wiki/questions/` | A durable research question worth accumulating evidence around |
+| `synthesis` | `wiki/syntheses/` | Cross-source comparison, overall judgment, or higher-level understanding |
 
-`wiki/Home.md` 是保留的语义导航页，不属于第六种知识类型。Project、Decision、Comparison 等独立类型延后到真实需求出现后再评估。
+`wiki/Home.md` is a reserved semantic navigation page, not a sixth knowledge type. Separate Project, Decision, Comparison, or other page types remain deferred until real usage justifies them.
 
-## 3. 必需 frontmatter
+## 3. Required frontmatter
 
-每个普通 Wiki 页面必须包含：
+Every ordinary Wiki page must contain:
 
 ```yaml
 ---
 title: Canonical Page Title
 type: source | concept | entity | question | synthesis
-summary: 一到两句、脱离正文仍可判断相关性的摘要。
+summary: One or two sentences that establish relevance without opening the body.
 aliases: []
 tags: []
 sources: []
@@ -47,84 +47,96 @@ updated: YYYY-MM-DD
 ---
 ```
 
-字段语义：
+Field semantics:
 
-- `title`：领域内最常用的 canonical term。
-- `summary`：用于低 token 候选筛选，不是正文摘要的重复。
-- `aliases`：只记录真实存在的中英文名称、缩写和常见变体；不得为满足字段而编造。
-- `tags`：少量宽泛主题标签。v1 没有受控 taxonomy。
-- `sources`：Vault-relative raw paths，例如 `raw/papers/example.pdf`。它用于发现，不能替代正文中的重要 claim citation。
-- `status`：正常页面为 `active`；合并或不再参与当前导航的页面为 `archived`。
-- `needs_review`：仅在真实冲突、重要不确定性或需要人类科学判断时设为 `true`。
-- `created` / `updated`：页面建立日期与最后一次语义修改日期；`updated` 不表示事实已重新验证。
+- `title`: the most common canonical term in the domain.
+- `summary`: supports low-token candidate selection; it is not a duplicate of the body abstract.
+- `aliases`: only real names, abbreviations, and common variants in English, Chinese, or another relevant language. Never invent aliases to fill the field.
+- `tags`: a small number of broad topic labels. v1 has no controlled taxonomy.
+- `sources`: Vault-relative raw paths such as `raw/papers/example.pdf`. This supports discovery but does not replace claim-level citations in the body.
+- `status`: ordinary pages are `active`; pages that have been merged or no longer participate in current navigation are `archived`.
+- `needs_review`: set to `true` only for a genuine conflict, material uncertainty, or issue requiring human scientific judgment.
+- `created` / `updated`: creation date and most recent semantic edit date. `updated` does not mean that all facts were reverified.
 
-允许 type-specific optional fields，例如 Source 的 DOI、Question 的 `question_status`，但不要将可由正文表达的信息重复堆进 frontmatter。
+Type-specific optional fields are allowed, such as a DOI on a Source page or `question_status` on a Question page. Do not duplicate in frontmatter information that is better expressed in the body.
 
-## 4. 语言、命名与链接
+## 4. Language, naming, and links
 
-- 用户明确指定 output language 时，以该要求为准。
-- 未明确指定时，只根据当前 user prompt 判定本次新增或修改正文的语言：prompt 中出现任何中文汉字则使用中文；prompt 为纯英文则使用英文。
-- 该规则同时适用于新建页面和更新已有页面，不要求延续页面原有语言。同一页面中英文混用是允许的，不应为统一语言而改写未受本次任务影响的内容。
-- 无论正文语言为何，都保留 canonical English technical terms、论文标题、模型名、数据集名、equations、code identifiers 和必要的原文引语。
-- `aliases` 继续记录真实存在的中英文名称和常见变体，以支持跨语言检索；不得为追求双语对称而编造名称。
-- 文件名与 `title` 尽量一致，并在整个 `wiki/` 中保持 basename 唯一。
-- 使用 Obsidian `[[wikilinks]]` 连接真正有助于理解或导航的页面。
-- 不要求每页达到固定链接数量；合法 orphan 优于虚假关系。
-- 不创建只包含一两句话、无法独立复用的页面。
-- Rename、merge、delete 前必须获得用户确认，并同步更新链接、index、manifest 和 log；唯一例外是 `WORKFLOW.md` 定义的 verified inbox cleanup，它只删除已验证、未被 Git 跟踪的投递副本。
+### Control-plane language
 
-## 5. Create、Update 与页面边界
+- Authoritative protocol and operational prose use English. This includes `SCHEMA.md`, `WORKFLOW.md`, `DECISIONS.md`, agent adapters, templates, `STATE.md`, and new `log.md` entries.
+- `README.md` is the canonical English human guide. `README.zh-CN.md` is the complete Chinese counterpart.
+- System framing, headings, comments, and machine-readable keys use English. Data values such as original titles, names, quotations, aliases, URLs, and paths remain in their canonical or source language.
+- `_system/index.md` may retain the language of a page title or summary because those entries are knowledge-derived retrieval data rather than protocol prose.
+
+### Wiki language
+
+- An explicit user language request takes precedence.
+- Otherwise, determine the language of body text created or modified in the current operation only from the current user prompt: if the prompt contains any Chinese Han character, write in Chinese; if the prompt is entirely English, write in English.
+- This rule applies to both page creation and page updates. It does not require preserving the existing page language. Mixed English and Chinese within one page is allowed, and unrelated content must not be rewritten merely for language consistency.
+- Regardless of body language, preserve canonical English technical terms, paper titles, model names, dataset names, equations, code identifiers, and necessary quotations in their original form.
+- `aliases` should continue to capture real English and Chinese names and common variants for cross-language retrieval. Do not invent aliases merely to create bilingual symmetry.
+
+### Naming and links
+
+- Keep the filename and `title` aligned where practical, and keep basenames unique across `wiki/`.
+- Use Obsidian `[[wikilinks]]` only when a connection materially helps understanding or navigation.
+- There is no required link count. A legitimate orphan is better than a fabricated relationship.
+- Do not create pages that contain only one or two sentences and cannot be reused independently.
+- Rename, merge, and delete require user confirmation and corresponding updates to links, index, manifest, and log. The only exception is verified inbox cleanup as defined in `WORKFLOW.md`; it removes only a verified, Git-untracked delivery copy.
+
+## 5. Create, update, and page boundaries
 
 ### Update before create
 
-创建页面前必须搜索 title、aliases、关键术语和同义词。主题已有合适页面时，将 material knowledge 合并进去。
+Before creating a page, search titles, aliases, key terms, and synonyms. If an appropriate page already exists, merge the material knowledge into it.
 
-新页面至少满足一项：
+A new page must satisfy at least one of these conditions:
 
-- 是持久且可复用的概念、实体或研究问题；
-- 预计会从多个页面被引用；
-- 有足够独立内容，分离后明显改善导航或推理；
-- 是真正跨来源、以后重建成本较高的 synthesis。
+- It represents a durable and reusable concept, entity, or research question.
+- It is likely to be referenced from multiple pages.
+- It has enough independent content that separation clearly improves navigation or reasoning.
+- It is a genuine cross-source synthesis that would be costly to reconstruct later.
 
-不要因为来源提到一个名词就创建 Entity，也不要把每个段落拆成页面。
+Do not create an Entity merely because a source mentions a noun, and do not split every paragraph into a page.
 
-### Source 与 Raw
+### Source and Raw
 
-- Raw 保存来源本身。
-- Source page 保存对单一来源的编译理解。
-- 并非每个 raw source 都需要 Source page。
-- Source page 不可作为其他页面的最终证据；重要 claim 仍应能回到 raw。
+- Raw stores the source itself.
+- A Source page stores the compiled understanding of one source.
+- Not every raw source needs a Source page.
+- A Source page is not final evidence for other pages; material claims must remain traceable to raw.
 
-### Academic / research paper Source page
+### Academic or research paper Source page
 
-对研究有持续价值的论文通常应建立独立 Source page；exact duplicate、`no_material` 或只为现有结论增加轻微支持的论文可以例外。论文 Source page 是可复用的 research reading note，不是 abstract 的改写。覆盖深度由 Standard、Deep 或 Exhaustive Ingest 决定，但任何模式都应按论文实际内容交代：
+A paper with continuing research value should usually receive its own Source page. Exact duplicates, `no_material` sources, or papers that add only minor support to an existing conclusion are exceptions. A paper Source page is a reusable research reading note, not a rewritten abstract. Coverage depth is determined by Standard, Deep, or Exhaustive Ingest, but every mode should address the following when the paper contains material information about them:
 
-- research question、背景、贡献和适用范围；
-- 核心定义、assumptions、method / architecture 与关键设计选择；
-- datasets、splits、preprocessing、baselines、metrics 和 experimental setup；
-- 关键结果、ablations、sensitivity、negative results 与 threats to validity；
-- 作者明确陈述的 limitations、可复现性信息、开放问题和与已有 Wiki 的关系。
+- research question, context, contribution, and scope;
+- core definitions, assumptions, method or architecture, and key design choices;
+- datasets, splits, preprocessing, baselines, metrics, and experimental setup;
+- key results, ablations, sensitivity, negative results, and threats to validity;
+- author-stated limitations, reproducibility information, open questions, and relationships to existing Wiki knowledge.
 
-公式没有固定数量配额。Standard 与 Deep 应保留足以理解核心贡献、解释实验、比较方法和判断复现要求的 equations / derivations；Exhaustive 应覆盖所有具有 material value 的公式与推导。任何模式都省略不会增加实际理解的教科书式、装饰性或重复公式。保留公式时同时记录：
+There is no fixed equation quota. Standard and Deep retain enough equations and derivations to understand the central contribution, interpret experiments, compare methods, and assess reproduction requirements. Exhaustive covers every equation and derivation with material value. Every mode omits textbook, decorative, or repetitive equations that add no practical understanding. For every retained equation, record:
 
-- 可读的 LaTeX 表达；
-- symbols、输入输出和单位（若适用）；
-- assumptions、该公式在方法中的作用及必要的推导逻辑；
-- equation、section 或 page locator。
+- readable LaTeX;
+- symbols, inputs, outputs, and units where applicable;
+- assumptions, the equation's role in the method, and necessary derivation logic;
+- an equation, section, or page locator.
 
-Figures 和 tables 采用相同原则：Standard 与 Deep 选择性编译承载核心 claim、实验比较、failure mode 或方法结构的 visual evidence；Exhaustive 覆盖所有 material visual evidence。不按固定数量截断，也不为完整而机械复制装饰性内容。
+Apply the same principle to figures and tables. Standard and Deep selectively compile visual evidence that carries a central claim, experimental comparison, failure mode, or method structure. Exhaustive covers all material visual evidence. Do not truncate at a fixed count or mechanically copy decorative material.
 
-Ingest mode 改变的是阅读覆盖与编译粒度，不改变 page type、frontmatter 或 provenance 标准。未编译进 Source page 的细节仍保留在 raw，后续可以按 locator 定向读取；不能把“可按需恢复”写成已经验证的结论。
+The ingest mode changes reading coverage and compilation granularity, not page type, frontmatter, or provenance requirements. Details not compiled into a Source page remain recoverable from raw through locators. Never present "recoverable on demand" as if it had already been verified.
 
-### Concept 与 Synthesis
+### Concept and Synthesis
 
-- Concept 是一个主题的最佳当前解释，随着来源加入持续更新。
-- Synthesis 是有明确问题、比较维度、范围或结论的跨来源分析。
-- 如果内容只是解释一个主题，应更新 Concept；只有形成独立论证或比较时才创建 Synthesis。
+- A Concept is the best current explanation of a topic and is updated as sources accumulate.
+- A Synthesis is a cross-source analysis with a clear question, comparison dimension, scope, or conclusion.
+- If the content merely explains a topic, update the Concept. Create a Synthesis only when there is an independent argument or comparison.
 
 ### Question
 
-Question 只用于持续研究问题，不用于保存一次性 query。建议使用可选字段：
+Use Question pages only for durable research questions, not one-off queries. The recommended optional field is:
 
 ```yaml
 question_status: open | provisional | answered | closed
@@ -132,72 +144,72 @@ question_status: open | provisional | answered | closed
 
 ## 6. Provenance
 
-以下内容必须在靠近 claim 的位置引用 raw evidence：
+The following require a nearby raw-evidence citation:
 
-- 精确数字、日期和 benchmark；
-- 直接引语；
-- 当前产品、软件、组织或政策状态；
-- 关键实验结果；
-- 争议性或可能被误解的结论。
+- exact numbers, dates, and benchmarks;
+- direct quotations;
+- current product, software, organization, or policy status;
+- key experimental results;
+- contested conclusions or claims that are easy to misinterpret.
 
-推荐使用 Markdown footnote，指向 Vault-relative raw path：
+Prefer Markdown footnotes that point to Vault-relative raw paths:
 
 ```markdown
-该实验在 Dataset X 上报告了 12.3 的结果。[^paper-p7]
+The experiment reports a score of 12.3 on Dataset X.[^paper-p7]
 
-[^paper-p7]: [[raw/papers/example.pdf#page=7]]，Table 2。
+[^paper-p7]: [[raw/papers/example.pdf#page=7]], Table 2.
 ```
 
-Web snapshot 可链接到 heading；论文在容易取得时保留 page、section、figure、table 或 equation locator。普通稳定 paraphrase 可以依赖页面 `sources`，无需给每句话添加 footnote。
+Web snapshots may link to headings. For papers, retain page, section, figure, table, or equation locators when readily available. Ordinary stable paraphrases may rely on the page-level `sources` field and do not require a footnote on every sentence.
 
-Wiki 页面之间的链接用于导航和解释，不构成循环证据。Derived synthesis 写回 Wiki 时必须保留原始 raw sources。
+Links between Wiki pages support navigation and explanation; they do not create circular evidence. When derived synthesis is written back to the Wiki, retain the underlying raw sources.
 
-## 7. Inference、Disagreement 与 Freshness
+## 7. Inference, disagreement, and freshness
 
 ### Inference
 
-来源没有直接表达、由 agent 或用户推导的结论使用明确标记：
+Mark conclusions not directly stated by a source and derived by an agent or user:
 
 ```markdown
-**[Inference]** 该结果可能意味着……
+**[Inference]** This result may imply...
 ```
 
 ### Disagreement
 
-- 在相关页面的 `Evidence and disagreement` 小节并列呈现不同主张、范围和来源。
-- 不自动假定较新来源或更多来源一定正确。
-- 先检查 dataset、split、metric、version、population、assumption 和 evaluation protocol 是否不同。
-- 需要用户判断时设置 `needs_review: true` 并在 `_system/STATE.md` 添加链接。
+- Present competing claims, scopes, and sources side by side in the relevant page's `Evidence and disagreement` section.
+- Do not assume that a newer source or a larger number of sources is necessarily correct.
+- First check for differences in dataset, split, metric, version, population, assumption, and evaluation protocol.
+- When human judgment is required, set `needs_review: true` and add a link in `_system/STATE.md`.
 
 ### Freshness
 
-- Timeless：不需要 freshness metadata。
-- Snapshot：正文使用 `as of YYYY-MM-DD`。
-- Pointer：保存权威 URL，并注明 `last checked: YYYY-MM-DD`。
-- 不使用统一的“90 天未更新即 stale”规则。
+- Timeless: no freshness metadata is required.
+- Snapshot: use `as of YYYY-MM-DD` in the body.
+- Pointer: retain the authoritative URL and add `last checked: YYYY-MM-DD`.
+- Do not apply a universal rule such as "90 days without an update means stale."
 
-## 8. Lifecycle 与结构变更
+## 8. Lifecycle and structural changes
 
-- Agent 可以创建和更新 `active` 页面。
-- 不要求用户审阅每次普通 additive ingest。
-- 合并页面时，将独有内容和 sources 转入 canonical page，修复链接，将旧页设为 `archived` 并明确指向 canonical page。
-- Raw evidence 永不因 Wiki merge/archive 被删除。
-- Schema change 必须获得用户确认并记录在 `DECISIONS.md` 和 `log.md`。
+- An agent may create and update `active` pages.
+- Ordinary additive ingest does not require review of every edit.
+- When merging pages, move unique content and sources into the canonical page, repair links, mark the old page `archived`, and point it clearly to the canonical page.
+- Raw evidence is never deleted because a Wiki page is merged or archived.
+- Schema changes require user confirmation and a `log.md` entry. Update `DECISIONS.md` only when the accepted architecture or its rationale changes.
 
 ## 9. Token-aware invariants
 
-- 使用 index、summary、aliases 和 targeted search 先筛选，再读取全文。
-- Standard Ingest 首轮最多完整打开 5 个候选页面；后续候选优先读取 frontmatter、summary 或命中 section。
-- Targeted patch 优先于整页重写。
-- 页面数量是风险提示，不是知识更新的硬上限。
-- 不因弱关联扩大 cascade，也不遍历整个 Wiki graph。
+- Use the index, summaries, aliases, and targeted search to filter candidates before reading full pages.
+- In the first Standard Ingest pass, open no more than 5 candidate pages in full. For later candidates, prefer frontmatter, summaries, or matching sections.
+- Prefer targeted patches over full-page rewrites.
+- Page count is a risk signal, not a hard limit on legitimate knowledge updates.
+- Do not expand the cascade on weak relationships or traverse the entire Wiki graph.
 
-## 10. v1 明确不包含
+## 10. Explicitly excluded from v1
 
-- Numeric confidence 或 source-quality scoring；
-- Typed relationship ontology；
-- Claim ledger 或 contradiction database；
-- Project page type；
-- Vector DB、graph DB、embeddings、PPR 或 BM25；
-- Background watcher、scheduled ingest 或 automatic reconciliation；
-- Staging transaction、locks 或多 writer。
+- Numeric confidence or source-quality scoring;
+- typed relationship ontology;
+- claim ledger or contradiction database;
+- Project page type;
+- vector DB, graph DB, embeddings, PPR, or BM25;
+- background watcher, scheduled ingest, or automatic reconciliation;
+- staging transactions, locks, or multiple writers.

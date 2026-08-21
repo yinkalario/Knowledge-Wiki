@@ -335,7 +335,7 @@ The starter protocol and documentation are released under the repository's [MIT 
 
 - [Schema](_system/SCHEMA.md): page model, metadata, provenance, and lifecycle.
 - [Workflow](_system/WORKFLOW.md): Ingest, Query, Promote, Research Mode, and Lint.
-- [Decisions](_system/DECISIONS.md): accepted architecture decisions.
+- [Decisions](_system/DECISIONS.md): curated current architecture and rationale, not a change log.
 - [Current State](_system/STATE.md): current focus and maintenance backlog.
 - [Templates](_system/templates/): the five page templates.
 - [Historical Bootstrap](_system/BOOTSTRAP.md): design history, not operational authority.

@@ -1,118 +1,160 @@
-# Knowledge_Wiki Decisions
+# Knowledge_Wiki Architecture Decisions
 
-> 保存已确认的架构决定和理由，不保存讨论 transcript。新决定按日期追加。
+> This file is a curated statement of the current accepted architecture and its rationale. It is not a patch log or discussion transcript. Normative rules live in `SCHEMA.md` and `WORKFLOW.md`; operational history lives in `log.md`, and exact change history lives in Git.
 
-## 2026-08-20 — 采用 Karpathy-style compiled Wiki
+## 1. Human-authoritative compiled knowledge
 
-- Raw evidence 与 compiled knowledge 分离。
-- 新来源优先更新已有知识，使 Wiki 变得更 coherent，而非只增加页数。
-- 人是最终 epistemic authority，LLM agent 是可替换 maintainer。
+**Decision**
 
-## 2026-08-20 — Vendor-neutral protocol 位于 Vault 内
+- Separate raw evidence from compiled Wiki knowledge.
+- Prefer updating existing knowledge over creating additional pages.
+- Treat the user as the final epistemic authority and the LLM agent as a replaceable maintainer.
 
-- `_system/SCHEMA.md` 与 `_system/WORKFLOW.md` 是权威协议。
-- `AGENTS.md` 和 `CLAUDE.md` 仅作为薄 adapter。
-- Agent history、cache、memory、hooks 和 embeddings 可丢弃。
+**Rationale**
 
-## 2026-08-20 — v1 保持最小页面模型
+Raw evidence preserves what a source said, while compiled knowledge should remain coherent as new sources arrive. Separating the two makes claims auditable without turning the Wiki into a source dump.
 
-- 普通知识页面只有 Source、Concept、Entity、Question、Synthesis 五类。
-- Project、Decision、Comparison 等独立类型等真实需求出现后再评估。
-- 不采用 numeric confidence、typed graph、claim ledger 或复杂 ontology。
+**Consequences**
 
-## 2026-08-20 — Standard Ingest 默认 token-aware
+- Material claims remain traceable to raw.
+- Source pages compile understanding but do not replace raw evidence.
+- Agent memory, cache, session history, and embeddings are disposable.
 
-- 使用 index、summary、aliases、`rg` 和 section-level reads。
-- 首轮最多完整打开 5 个候选页，但不将 5 页作为最终更新硬上限。
-- 1–10 个 material changes 属于普通 ingest 范围；超过 10 页先确认。
-- Deep Ingest 必须由用户明确要求。
+## 2. Portable control plane and language
 
-## 2026-08-20 — Query 默认只读，支持显式写回
+**Decision**
 
-- Agent 对 durable query output 主动提出 Promotion proposal。
-- 用户可显式 Promote，或为当前会话启用 Research Mode。
-- 不自动保存普通答案或完整 conversation。
+- Keep the vendor-neutral protocol inside the Vault.
+- Use `_system/SCHEMA.md` and `_system/WORKFLOW.md` as the authoritative control plane; keep `AGENTS.md` and `CLAUDE.md` as thin adapters.
+- Use English for system protocol and operational prose.
+- Let the current user prompt determine Wiki body language: a prompt containing Chinese uses Chinese, while an English-only prompt uses English, unless the user explicitly requests another language.
+- Preserve canonical English technical terms, identifiers, paper titles, model names, dataset names, and genuine multilingual aliases.
 
-## 2026-08-20 — 使用简单 manifest.json
+**Rationale**
 
-- v1 通过 Vault-relative raw path、SHA-256、URL/DOI 和 affected pages 防止重复 ingest。
-- JSONL event ledger、source/version IDs 等在简单 manifest 真正成为瓶颈后再考虑。
+Any capable agent should be able to maintain the Vault from files alone, without vendor-specific memory or conversation context. English provides one portable control language, while prompt-directed Wiki language preserves usability for multilingual research.
 
-## 2026-08-20 — Obsidian 是 viewer，不是权威 runtime
+**Consequences**
 
-- v1 只依赖 Markdown、YAML、wikilinks、backlinks、search、Graph 和 templates。
-- 不安装 Wiki maintainer、Dataview、PPR、BM25 或 embedding 插件。
-- `wiki/Home.md` 作为简短的人类 dashboard，展示 current research、needs review、recent updates 和知识导航；完整机器候选目录仍由 `_system/index.md` 承担。
+- `README.md` is the canonical English human guide, with `README.zh-CN.md` as the complete Chinese counterpart.
+- System structure and keys remain English; original titles, names, paths, quotations, and knowledge-derived index data may retain their canonical language.
+- A public starter contains generic protocol and a clean skeleton, not a maintainer's personal raw, Wiki, state, manifest records, log history, or conversations.
 
-## 2026-08-20 — Single writer、Git 与文件同步
+## 3. Minimal knowledge model and viewer-independent format
 
-- Codex 和 Claude Code 可以交替维护，但不能同时写。
-- Git 用于 diff、审计和回滚；任何 file-sync service 都只负责文件同步，不提供并发写入协调。
-- Merge、rename、delete、重大冲突和 schema change 必须先获得用户确认；后续确认的 verified inbox cleanup 是唯一狭窄例外。
+**Decision**
 
-## 2026-08-20 — 人类文档与 starter 发布边界
+- Keep the v1 page model to Source, Concept, Entity, Question, and Synthesis.
+- Treat `wiki/Home.md` as a human dashboard and `_system/index.md` as the compact machine candidate catalog.
+- Use portable Markdown, YAML, raw paths, and wikilinks as durable representation.
+- Treat Obsidian as a viewer rather than an authoritative runtime.
 
-- 根目录 `README.md` 是面向人的 Quick Start，不复制权威协议。
-- 正文与 README 默认中文，保留 canonical English terms。
-- 公开 starter 只包含干净骨架和通用协议，不包含维护者的个人 raw、wiki、STATE、manifest、log 或 conversations。
+**Rationale**
 
-## 2026-08-20 — Verified inbox cleanup 是狭窄删除例外
+A small page model and plain files are easier to search, audit, migrate, and maintain across agents. Additional ontology or runtime infrastructure should solve an observed problem rather than an anticipated one.
 
-- 成功 ingest 和 commit 后，只有当 canonical raw、SHA-256、manifest、bookkeeping、lint 与附件状态全部验证通过，agent 才可自动删除未被 Git 跟踪的 inbox 临时副本。
-- 任一条件不满足、附件归属不明或 inbox 文件可能是唯一副本时必须保留并报告。
-- 此例外不授权删除 raw、Wiki、被 Git 跟踪的文件或任何未验证内容。
+**Consequences**
 
-## 2026-08-20 — 论文深度按 material information 自适应
+- Project, Decision, Comparison, numeric confidence, typed relationships, claim ledgers, and complex taxonomy remain deferred.
+- Dataview, vector databases, graph databases, embeddings, PPR, BM25, background watchers, and multi-writer coordination are not required by v1.
+- New page types or infrastructure require a demonstrated need and explicit approval.
 
-- Standard Paper Ingest 也必须产生研究可用的 reading note，token-aware 不等于 abstract-only summary。
-- Equations、derivations、figures 和 tables 不设固定数量配额；保留所有影响理解、比较、判断或复现的 material details。
-- Deep Ingest 追求 material completeness。长论文可以按 section/chapter 分批，但不得以节省 token 为由降低最终分析深度。
-- 跨批次 Deep Ingest 必须把 section coverage 和剩余工作写入 portable STATE；全部计划覆盖完成前不得宣称完成或清理 inbox 副本。
-- “完整”不要求逐字复制参考文献、通用背景或重复表述。
+## 4. Three ingest modes with shared epistemic standards
 
-## 2026-08-20 — 论文 Ingest 分为 Standard、Deep 与 Exhaustive
+**Decision**
 
-- 本决定取代上一决定中“Deep Ingest 追求 material completeness”以及跨批次 Deep coverage 的表述；旧记录保留用于说明设计演化。
-- Standard 是默认模式，生成研究可用但 token-aware 的 reading note。
-- Deep 必须显式要求，目标是核心论证和证据链的深入理解；先建立 section map，再选择性编译 durable details，未写入细节保留 locator 供 Query 按需读取。
-- Exhaustive 必须显式要求，承接原 Deep 的 material-completeness 职责，用于复现、审稿和逐节技术审查；跨批次进度必须写入 portable STATE。
-- 三种模式共享相同 page schema、provenance、update-before-create 与高风险确认边界；差别仅在阅读覆盖和编译粒度。
-- 公式、图表和实验仍不设固定数量配额，由 material value 与所选 ingest mode 决定。
+- Standard Ingest is the default and remains token-aware while producing research-usable notes.
+- Deep Ingest requires an explicit request and targets deep understanding of the central argument and evidence chain with selective durable compilation.
+- Exhaustive Ingest requires an explicit request and targets material-complete coverage for reproduction, peer review, or section-by-section technical analysis.
+- Equations, derivations, figures, tables, and experiments are selected by material value and ingest mode, not fixed quotas.
 
-## 2026-08-21 — 人类 README 改为英文默认、中文并行
+**Rationale**
 
-- 本决定取代先前“README 默认中文”的表述；Wiki 正文仍默认中文并保留 canonical English technical terms。
-- GitHub 默认入口 `README.md` 使用英文，完整中文版本位于 `README.zh-CN.md`。
-- 两个版本顶部提供双向 language switch，并保持相同的用户操作、权限边界、隐私提醒和权威协议链接。
-- `_system/SCHEMA.md` 与 `_system/WORKFLOW.md` 仍是唯一权威协议；双语 README 只提供人类 Quick Start，不复制或替代完整 protocol。
+Research tasks need different reading depths, but depth should not create incompatible page types or weaken evidence standards. A three-level model separates ordinary efficiency, central-depth analysis, and material completeness.
 
-## 2026-08-21 — Wiki 写入语言由当前 Prompt 决定
+**Consequences**
 
-- 本决定取代早期“正文默认中文”以及上一项决定中“Wiki 正文仍默认中文”的表述；README 的英文默认、中文并行策略不变。
-- 用户明确指定 output language 时，以明确要求为准；否则，当前 user prompt 出现任何中文汉字时，本次新增或修改的正文使用中文，纯英文 prompt 使用英文。
-- 该规则适用于 create 和 update，不要求沿用已有页面的语言。同一文件允许中英文混用，也不为统一语言而重写无关内容。
-- Canonical English terms、论文标题、模型名、数据集名、equations、code identifiers 和必要原文引语保持原样；真实中英文 aliases 继续支持跨语言 retrieval。
+- All modes share the same page schema, provenance, update-before-create rule, and confirmation boundaries.
+- Standard opens no more than 5 candidate pages in full during the first pass; this is a reading bound, not a hard cap on legitimate updates.
+- 1–10 material page changes are within ordinary ingest authority; more than 10 require a proposed change list and user confirmation.
+- Long Exhaustive work may be batched, with coverage and remaining work recorded in portable STATE until completion.
 
-## 2026-08-21 — System 文件自动检查、确认后归档
+## 5. Query is read-only unless knowledge is promoted
 
-- v1 没有 background watcher；agent 在用户触发的维护、Lint、Ingest、schema review 或 handoff 中自动留意 system-file growth 和无关读取成本。
-- `STATE.md` 保持 bounded；durable outcome 已写入 log 或 decision 后，已完成的临时状态可在正常维护中自动压缩，并留下记录。
-- `SCHEMA.md` 与 `WORKFLOW.md` 维护 current truth；`DECISIONS.md` 与 `log.md` 保留历史，Git 提供完整 diff 和恢复能力。
-- 创建 archive 目录、移动历史记录、拆分权威协议、分片 index/manifest 或改变 read order 前，agent 必须先提供具体方案并获得用户确认。
-- 当前没有真实归档需求，因此不创建 archive 目录，也不引入 lifecycle scripts 或额外基础设施。
+**Decision**
 
-## 2026-08-21 — Raw 与 inbox 不由 Git 跟踪
+- Keep ordinary Query read-only.
+- Propose Promotion when an answer produces durable, reusable knowledge that would be costly to reconstruct.
+- Allow explicit Promote and session-scoped Research Mode without automatically preserving the full conversation.
 
-- Git 跟踪 compiled Wiki、`_system/`、文档和用于保留目录结构的 `.gitkeep`，不跟踪 `raw/` 与 `inbox/` 的实际内容。
-- `raw/` 仍是 Vault 内的 canonical evidence，由 file-sync service 保持跨设备可用，并由独立、版本化、最好异地的备份提供灾难恢复。
-- `_system/manifest.json` 继续进入 Git，保存 raw path、来源标识和 SHA-256；hash 只能验证内容，不能恢复缺失 raw。
-- `.git/` 保持在指定提交机本地，不通过 file-sync service 跨设备复制。
-- 没有 `.git/` 的设备可以执行 ingest 和 lint，但必须保留 inbox 副本并报告待提交改动；提交机在文件同步后重新 diff、lint 和 commit。
-- 用户自行 ingest 的 raw/inbox 内容从首次创建起即被 `.gitignore` 排除；starter 只保留目录 `.gitkeep`。
+**Rationale**
 
-## 2026-08-21 — 临时处理优先使用 Vault 外的 OS temp
+Most questions do not justify durable writes. Separating retrieval from compilation prevents temporary answers and brainstorming from accumulating as authoritative knowledge.
 
-- Ingest 中的 extraction、rendering、OCR 和 download staging 优先使用 Vault 外的 OS temporary directory，避免无意义的中间产物被 file-sync service 传播。
-- 必须在 Vault 内处理时，统一使用 Git-ignored `_runtime/<operation-id>/`，不创建 ad hoc 顶层 `tmp/` 或 `temp/`。
-- Runtime 只容纳可重建的中间产物；canonical raw、compiled knowledge 和 bookkeeping 必须进入已定义的 durable paths。
-- 该规则属于跨机器、跨 agent 的可移植操作协议，不记录某台设备的个人操作偏好。
+**Consequences**
+
+- Query does not modify Wiki, index, manifest, STATE, or log.
+- Promoted claims return to raw evidence, preserve provenance, and mark inference.
+- Research Mode never becomes a hidden persistent preference and retains high-risk confirmation boundaries.
+
+## 6. Simple provenance and bookkeeping
+
+**Decision**
+
+- Use immutable dated raw snapshots as canonical evidence.
+- Use a simple `manifest.json` keyed by Vault-relative raw path, with SHA-256, source identifiers, disposition, and affected pages.
+- Use exact hashes as the duplicate gate.
+- Defer event ledgers, source/version IDs, and more complex databases until the simple manifest causes a real operational problem.
+
+**Rationale**
+
+The system needs reproducible provenance and duplicate detection without introducing a database or hidden runtime dependency.
+
+**Consequences**
+
+- Identical hashes do not produce duplicate Wiki knowledge.
+- Changed content at the same URL or DOI becomes a new retained snapshot.
+- A hash verifies integrity but cannot recover missing raw evidence.
+- Load-bearing numbers, quotations, current claims, and experimental results cite raw near the claim.
+
+## 7. Single writer, separated synchronization, and recoverable evidence
+
+**Decision**
+
+- Allow only one canonical writer at a time.
+- Use file synchronization to move ordinary Vault files across devices, Git for text diff, audit, and rollback, and an independent versioned backup for raw disaster recovery.
+- Keep `.git/` local to the designated commit machine and never copy it through the file-sync service.
+- Keep actual `raw/` and `inbox/` content in the Vault but outside Git; track their directory markers and keep `_system/manifest.json` in Git.
+- Prefer OS temporary storage for intermediate processing; use Git-ignored `_runtime/` only when workspace-local scratch is required. Runtime artifacts are never authoritative.
+
+**Rationale**
+
+File synchronization and Git maintain different state and cannot safely coordinate concurrent writers. Raw evidence may grow large and needs reliable recovery, but Git is not the appropriate recovery layer for it.
+
+**Consequences**
+
+- A device without `.git/` may ingest and lint, but retains inbox delivery copies and reports exact pending changes. The commit machine rechecks synchronization, diff, manifest-to-raw consistency, and lint before committing.
+- Switching devices or agents requires waiting for file synchronization and preserving the single-writer boundary.
+- Verified inbox cleanup is the only narrow delete exception: it occurs only after canonical raw, matching SHA-256, manifest, bookkeeping, lint, attachments, and commit state are all verified.
+- Runtime scratch must never be the only copy of durable evidence or knowledge.
+
+## 8. Curated governance and bounded operational state
+
+**Decision**
+
+- Keep `SCHEMA.md` and `WORKFLOW.md` as current truth and edit superseded rules in place.
+- Keep `DECISIONS.md` curated by architectural topic rather than appending every patch.
+- Keep `STATE.md` bounded to current focus, pending human review, maintenance backlog, and handoff needs.
+- Keep `log.md` as append-only semantic operation history and Git as exact file history.
+
+**Rationale**
+
+Each file should answer one question without duplicating the same history. Current rules must remain easy to locate, while operational and exact change history remain recoverable at the appropriate layer.
+
+**Consequences**
+
+- Maintenance outcomes and one-time migrations belong in `log.md` or Git, not in architecture decisions.
+- Completed STATE items may be compressed after their durable outcomes are captured.
+- Merge, rename, delete, major epistemic conflict, schema change, and more than 10 planned page changes require user confirmation, except verified inbox cleanup.
+- Archive structures, protocol splits, index or manifest sharding, adapter read-order changes, and durable path changes require a concrete proposal and prior approval.
+- No archive or lifecycle infrastructure is introduced before a real need appears.

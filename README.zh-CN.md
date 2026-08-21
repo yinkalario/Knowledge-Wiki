@@ -333,7 +333,7 @@ Starter protocol 和文档采用本仓库的 [MIT License](LICENSE)。用户自�
 
 - [Schema](_system/SCHEMA.md)：页面模型、metadata、provenance 和 lifecycle。
 - [Workflow](_system/WORKFLOW.md)：Ingest、Query、Promote、Research Mode 和 Lint。
-- [Decisions](_system/DECISIONS.md)：已确认的设计决定。
+- [Decisions](_system/DECISIONS.md)：当前已接受的架构决定与理由，不是修改流水。
 - [Current State](_system/STATE.md)：当前 focus 和维护 backlog。
 - [Templates](_system/templates/)：五种页面模板。
 - [Historical Bootstrap](_system/BOOTSTRAP.md)：设计历史，不再是 operational authority。
