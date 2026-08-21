@@ -12,18 +12,23 @@
 > [!important] 当前状态
 > 这是一个干净、尚未使用的 starter template。v1 结构、真实来源 workflow 和 Codex/Claude Code fresh handoff 已在独立的私有 pilot 中验证；本仓库不包含 pilot 来源、compiled knowledge、个人 STATE 或操作历史。
 
-## 它解决什么问题
+## 为什么使用 Knowledge Wiki？
 
-普通 RAG 或文件问答每次都重新搜索原始资料。Knowledge_Wiki 在 ingest 时完成一次编译：新来源会更新已有 Concept、Entity、Question 和 Synthesis，而不是只增加一篇孤立摘要。之后提问时，agent 优先读取已经整理好的 Wiki，再按需回到 raw evidence。
+假设你已经读了几十篇论文，也收藏了几百个有用的网页。普通文件问答或 RAG 工具可以搜索这些文件并回答一次问题，但答案通常留在聊天记录里。下次提问又要从同一堆文件重新搜索，不同资料之间的关系也仍然是分散的。
 
-核心原则：
+Karpathy-style LLM Wiki 的核心想法是改变这个循环：让 LLM 把新资料持续编译进一个会被维护的 Wiki。Knowledge Wiki 在此基础上，把它做成了一套可以日常使用、source-grounded 的 Obsidian workflow。
 
-- Raw evidence 与 compiled knowledge 分离；
-- Update before create；
-- Query 默认只读；
-- 重要 claim 可回到 raw source；
-- Agent 可替换，Vault 文件才是长期 memory；
-- 从简单开始，真实问题出现后再增加工具。
+### 这个项目主要增加了什么
+
+- **知识会累积，而不是只堆积摘要。** 新论文不会默认变成又一篇孤立总结。Agent 会先搜索 Wiki 已有内容，更新现有 Concept 和 Entity，记录值得长期追踪的 Question，只在真正形成跨来源比较或结论时创建 Synthesis。
+- **重要结论都可以回去核对。** 原始 PDF、网页快照和其他证据保留在 `raw/`。关键数字、引语、实验结果和时效性事实可以定位到具体 page、section、figure、table 或 snapshot。
+- **你可以决定读多深。** Standard Ingest 高效处理日常资料；Deep Ingest 深入跟踪核心论证和证据链；Exhaustive Ingest 用于复现、审稿或逐节完整技术分析。
+- **提问不会自动污染 Wiki。** Query 默认只读。当讨论产生值得保留的内容时，Promote 只会编译 durable conclusion，而不是把整段 conversation 存起来。
+- **Agent 可以随时替换。** Codex、Claude Code 或其他 file-based agent 都可以仅依靠 Vault 接管。真正持久的 memory 是普通 Markdown、raw evidence 和少量 bookkeeping 文件，而不是某个产品的聊天历史或隐藏 memory。
+- **跨设备工作仍然可审计。** Hash 防止重复 ingest，manifest 记录每个来源影响了什么，Git 审阅文本历史，raw evidence 则可以单独同步和备份。
+- **系统始终可以被人看懂。** v1 只使用五种页面、Obsidian links、Search、Graph 和普通文件。只有真实 retrieval problem 出现后，才增加 database、embeddings 或复杂 plugins。
+
+实际使用时，你可以直接问：“我的 Wiki 现在对这个主题的理解是什么，为什么，哪些来源存在分歧？”回答来自一个持续维护的知识体系，而不是一堆互不相干的摘要。
 
 ## 适合保存什么
 
@@ -45,52 +50,64 @@
 
 ## 五分钟 Quick Start
 
-### 1. 打开 Vault
+### 1. 安装 Obsidian 和 Web Clipper
 
-Clone 或下载本仓库，然后使用 Obsidian 打开仓库根目录。也可以使用普通 Markdown 编辑器浏览全部文件。如果会加入私人或受版权保护的来源，请使用 private personal repository，而不是公开 fork。
+- 为当前操作系统安装 [Obsidian](https://obsidian.md/download)。
+- 在 Chromium-based 浏览器、Firefox、Safari 或 Edge 中安装官方 [Obsidian Web Clipper](https://obsidian.md/clipper) 扩展。
 
-### 2. 启动一个文件型 agent
+Web Clipper 是把文章和选中段落以 Markdown 形式送进 Wiki 的最简单方式。建议用它 capture 网页，但它不是 runtime dependency：PDF、本地文件、粘贴文本和直接 URL 同样可以使用。
 
-在 Vault 根目录启动 Codex 或 Claude Code：
+### 2. 把整个仓库作为一个 Vault 打开
+
+Clone、下载或找到 `Knowledge_Wiki` 文件夹。在 Obsidian 中选择 **Open folder as vault**，然后选择仓库根目录，也就是同时包含 `AGENTS.md`、`_system/`、`wiki/`、`raw/` 和 `inbox/` 的那个文件夹。
+
+不要只把 `wiki/` 打开为 Vault。Agent 需要同时看到 protocol、evidence、inbox 和 bookkeeping 目录。如果准备 ingest 私人或受版权保护的资料，请使用 private personal copy，而不是公开 fork。
+
+### 3. 连接一个 file-based agent
+
+以 Vault 根目录为 working directory，启动 Codex、Claude Code 或其他 file-based coding agent。
 
 - Codex 通过 `AGENTS.md` 进入系统；
 - Claude Code 通过 `CLAUDE.md` 进入系统；
-- 两者最终读取相同的 `_system/SCHEMA.md` 和 `_system/WORKFLOW.md`。
+- 两者都遵循相同的 `_system/SCHEMA.md` 和 `_system/WORKFLOW.md`，不需要之前的聊天 context。
 
-不要让两个 agent 同时写入 Vault。
-
-### 3. 提供第一份来源
-
-你可以：
-
-- 把 PDF、Markdown 或文本文件放进 `inbox/`；
-- 直接给 agent 一个 URL；
-- 粘贴一段文本并明确要求 ingest。
-
-然后输入：
+第一次可以先做只读检查：
 
 ```text
-请处理 inbox 里的新资料。
+请读取仓库指引，了解这个 Knowledge Wiki，准备好后告诉我。先不要修改文件。
 ```
 
-不需要查找或输入文件名。Agent 会对照 manifest 和 hash 找出尚未处理的 inbox 文件；如果有多个新来源，会先列出并依次处理。成功 ingest、完成 commit 且确认 raw 与 inbox hash 一致后，agent 会自动清理那个未被 Git 跟踪的 inbox 临时副本；任何验证失败或归属不明的文件都会留在 inbox 并报告。
+不要让两个 agent 同时写入 Vault。没有 `.git/` 的设备可以 ingest 和 lint，但应由指定提交机稍后审阅并提交已同步的变更。
 
-或者：
+### 4. 把第一份来源放进 `inbox/`
+
+选择任意一种方式：
+
+- **网页文章：** 打开 Web Clipper，选择这个 Vault，将目标 Folder 设为 `inbox/`，检查抓取的文章，然后点击 **Add to Obsidian**。
+- **PDF、Markdown 或文本文件：** 通过 Finder、File Explorer 或 file-sync service 把文件复制到 `inbox/`。
+- **直接 URL 或粘贴文本：** 直接提供给 agent，并明确要求 Ingest。
+
+`inbox/` 是资料投递区。不要手动把尚未处理的 source 放进 `wiki/`；agent 会在正确位置创建 canonical raw evidence 和 compiled pages。
+
+### 5. 执行第一次 Ingest
+
+普通资料默认使用 Standard Ingest：
 
 ```text
-请用 Standard Ingest 摄取这个 Blog：
-https://example.com/article
+请用 Standard Ingest 处理 inbox 里的新资料。
 ```
 
-Agent 会保存 raw、检查重复、搜索已有知识、更新或创建必要页面，并报告所有变更。
+Agent 会通过 manifest 和 hash 识别未处理文件，保留 canonical raw evidence，检查重复，搜索已有知识，先更新后创建，验证 links 和 provenance，并报告每个 created/updated file。如果 inbox 里有多个新来源，会先列出再依次处理。只有所有 cleanup 条件都通过后才会删除 inbox 投递副本；否则会保留并说明原因。
 
-### 4. 开始提问
+### 6. 打开结果并开始提问
+
+从 `wiki/Home.md` 开始，再打开新 Source page 以及它更新的 Concept 或 Entity page。然后试一次只读 Query：
 
 ```text
 根据我的 Wiki，Flow Matching 和 Diffusion 的核心区别是什么？
 ```
 
-Query 默认不会修改 Vault。如果答案产生值得长期保留的结论，agent 会提出 Promote 建议。
+Query 默认不会修改 Vault。如果答案中有值得保留的 durable conclusion，agent 会提出 Promote 建议。
 
 ## 主要操作方式
 
@@ -212,7 +229,8 @@ Commit, then remove only hash-verified untracked inbox copies
 - 从 `wiki/Home.md` 开始；
 - 使用 Search 查找正文；
 - 使用 Backlinks 和 Outgoing Links 理解关系；
-- Graph View 已排除 `_system`、`raw` 和 `inbox`；
+- 经过几次 ingest 后，使用 global Graph 查看 topic clusters、bridge pages 和孤立区域。Graph View 已排除 `_system`、`raw` 和 `inbox`；
+- 只在想看某个已连接页面的直接邻域时使用 Local Graph；新 Wiki 中 Local Graph 很稀疏是正常的；
 - 新附件默认进入 `inbox/attachments/`，在 ingest 后再进入正式 raw layer。
 
 `_system/index.md` 是 agent 的 compact catalog，不是语义知识页，也不应被当作证据。
@@ -229,13 +247,14 @@ Commit, then remove only hash-verified untracked inbox copies
 
 也可以启用 Obsidian 的 **Properties view** core plugin，在侧边栏集中查看整个 Vault 使用了哪些 property；这不是 Knowledge_Wiki 的运行依赖。
 
-### 如何打开 Local Graph？
+### Global Graph 和 Local Graph
 
-1. 先打开希望检查的知识页；
-2. 打开 Command Palette（macOS 通常为 `Cmd+P`，Windows/Linux 通常为 `Ctrl+P`）；
-3. 搜索并执行 **Open local graph**。
+**Graph view** 是 Obsidian core plugin。如果找不到 Graph 命令，先在 **Settings → Core plugins → Graph view** 中启用它。
 
-如果找不到该命令，在 **Settings → Core plugins** 中确认 **Graph view** 已启用。Local Graph 只显示与当前页相连的页面；知识页很少时图很稀疏是正常现象，不应为了让图更好看而制造链接。
+- 打开 global Graph：使用 ribbon 中的 **Open graph view** 按钮，或在 Command Palette 中执行 **Open graph view**。它显示整个 Vault，当几份来源已建立足够关系后，可以用来观察 clusters 和 knowledge gaps。
+- 打开 Local Graph：先打开一个知识页，再在 Command Palette（macOS 通常为 `Cmd+P`，Windows/Linux 通常为 `Ctrl+P`）中执行 **Open local graph**。它只显示与当前页相连的 notes，并可以调整 depth。
+
+对新建或连接较少的 Wiki，Search、Backlinks、Outgoing Links 和 global Graph 通常比 Local Graph 更有信息量。Graph 稀疏很正常；不要为了让图看起来更丰富而制造链接。
 
 ## 查看和恢复修改
 

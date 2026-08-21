@@ -12,18 +12,23 @@ A long-lived personal research knowledge base inspired by Andrej Karpathy's LLM 
 > [!important] Current status
 > This repository is a clean, unused starter template. The v1 structure, real-source workflow, and fresh Codex/Claude Code handoff were validated in a separate private pilot; no pilot sources, compiled knowledge, personal state, or operation history are included here.
 
-## What problem does it solve?
+## Why use Knowledge Wiki?
 
-Ordinary RAG and file-chat systems repeatedly search the original material for every question. Knowledge_Wiki performs a compilation step during ingest: a new source updates existing Concepts, Entities, Questions, and Syntheses instead of merely adding another isolated summary. Later queries read the compiled Wiki first and return to raw evidence only when needed.
+Imagine that you have read dozens of papers and saved hundreds of useful web pages. A normal file-chat or RAG tool can search those files and answer one question, but the answer usually disappears into chat history. The next question starts by searching the same pile again, and important connections remain scattered across separate documents.
 
-Core principles:
+The Karpathy-style LLM Wiki idea changes that loop: let an LLM continually compile new material into a maintained Wiki. Knowledge Wiki turns that idea into a practical, source-grounded Obsidian workflow that can be used every day.
 
-- Separate raw evidence from compiled knowledge.
-- Update before create.
-- Keep Query read-only by default.
-- Make important claims traceable to raw sources.
-- Treat agents as replaceable and Vault files as durable memory.
-- Start simple and add tooling only after real failures appear.
+### What this project adds
+
+- **Knowledge compounds instead of piling up.** A new paper does not automatically become one more isolated summary. The agent searches what the Wiki already knows, updates existing Concepts and Entities, records durable Questions, and creates a cross-source Synthesis only when it adds a real comparison or conclusion.
+- **Every important claim can be checked.** Original PDFs, web snapshots, and other evidence remain under `raw/`. Important numbers, quotations, results, and current facts point back to an exact page, section, figure, table, or snapshot.
+- **You choose how deeply a source is read.** Standard Ingest handles everyday material efficiently, Deep Ingest follows the central argument and evidence chain closely, and Exhaustive Ingest supports reproduction, peer review, or section-by-section analysis.
+- **You can ask without polluting the Wiki.** Query is read-only by default. If a discussion produces something worth keeping, Promote compiles only the durable conclusion rather than saving the whole conversation.
+- **The agent is replaceable.** Codex, Claude Code, or another file-based agent can take over from the Vault itself. The durable memory is ordinary Markdown, raw evidence, and small bookkeeping files—not one vendor's chat history or hidden memory.
+- **Cross-device work remains auditable.** Hashes prevent duplicate ingest, the manifest records what each source changed, Git reviews the text history, and raw evidence can be synchronized and backed up separately.
+- **The system stays understandable.** It starts with five page types, Obsidian links, Search, Graph, and plain files. Databases, embeddings, and complex plugins are added only after a real retrieval problem appears.
+
+In practice, this means you can ask, "What does my Wiki currently believe about this topic, why, and which sources disagree?" and receive an answer from one maintained body of knowledge rather than a stack of unrelated summaries.
 
 ## What belongs here?
 
@@ -47,52 +52,64 @@ Keep those in an operational vault or another purpose-built system.
 
 ## Five-minute Quick Start
 
-### 1. Open the Vault
+### 1. Install Obsidian and the Web Clipper
 
-Clone or download this repository, then open its root directory as an Obsidian Vault. Every file also remains usable in an ordinary Markdown editor. If you will add private or copyrighted sources, use a private personal repository rather than a public fork.
+- Install [Obsidian](https://obsidian.md/download) for your operating system.
+- Install the official [Obsidian Web Clipper](https://obsidian.md/clipper) browser extension for Chromium-based browsers, Firefox, Safari, or Edge.
 
-### 2. Start a file-based agent
+Web Clipper is the easiest way to send articles and selected passages into the Wiki as Markdown. It is recommended for capture, but it is not a runtime dependency: PDFs, local files, pasted text, and direct URLs also work.
 
-Launch Codex or Claude Code from the Vault root:
+### 2. Open the entire repository as one Vault
+
+Clone, download, or locate the `Knowledge_Wiki` folder. In Obsidian, choose **Open folder as vault** and select the repository root—the folder that contains `AGENTS.md`, `_system/`, `wiki/`, `raw/`, and `inbox/`.
+
+Do not open only `wiki/` as the Vault. The agent needs the protocol, evidence, inbox, and bookkeeping directories together. If you plan to ingest private or copyrighted material, work from a private personal copy rather than a public fork.
+
+### 3. Connect a file-based agent
+
+Start Codex, Claude Code, or another file-based coding agent with the Vault root as its working directory.
 
 - Codex enters through `AGENTS.md`.
 - Claude Code enters through `CLAUDE.md`.
-- Both ultimately follow the same `_system/SCHEMA.md` and `_system/WORKFLOW.md`.
+- Both follow the same `_system/SCHEMA.md` and `_system/WORKFLOW.md` without needing earlier chat context.
 
-Never let two agents write to the Vault at the same time.
-
-### 3. Provide the first source
-
-You can:
-
-- place a PDF, Markdown file, or text file in `inbox/`;
-- give the agent a URL directly;
-- paste text and explicitly ask the agent to ingest it.
-
-Then say:
+For a first read-only check, ask:
 
 ```text
-Process the new material in inbox.
+Read the repository instructions, orient yourself to this Knowledge Wiki, and tell me when you are ready. Do not modify files yet.
 ```
 
-You do not need to find or type the filename. The agent compares inbox files with the manifest and hashes to find unprocessed material. If several new sources are present, it lists and processes them in sequence. After a successful ingest and commit, it removes an untracked inbox delivery copy only when the canonical raw file and inbox file have identical hashes. Anything ambiguous or insufficiently verified stays in the inbox and is reported.
+Never let two agents write to the Vault at the same time. A device without `.git/` may ingest and lint, but the designated commit machine should review and commit the synchronized changes later.
 
-Alternatively:
+### 4. Put the first source in `inbox/`
+
+Choose one of these paths:
+
+- **Web article:** open Web Clipper, select this Vault, set the destination folder to `inbox/`, review the captured article, and click **Add to Obsidian**.
+- **PDF, Markdown, or text file:** copy the file into `inbox/` with Finder, File Explorer, or your file-sync service.
+- **Direct URL or pasted text:** give it to the agent and explicitly request Ingest.
+
+Use `inbox/` as the delivery area. Do not manually place unprocessed sources under `wiki/`; the agent will create canonical raw evidence and compiled pages in the correct locations.
+
+### 5. Run the first Ingest
+
+For ordinary material, Standard Ingest is the default:
 
 ```text
-Use Standard Ingest for this blog:
-https://example.com/article
+Process the new material in inbox using Standard Ingest.
 ```
 
-The agent captures the raw source, checks for duplicates, searches existing knowledge, updates or creates the necessary pages, and reports every change.
+The agent identifies unprocessed files by manifest and hash, preserves canonical raw evidence, checks for duplicates, searches existing knowledge, updates before creating, validates links and provenance, and reports every created or updated file. If several new sources are present, it lists and processes them in sequence. An inbox delivery copy is removed only after all cleanup conditions pass; otherwise it remains in place with an explanation.
 
-### 4. Ask a question
+### 6. Open the result and ask a question
+
+Start at `wiki/Home.md`, then open the new Source page and any Concept or Entity pages it updated. Try a read-only Query:
 
 ```text
 According to my Wiki, what are the main differences between Flow Matching and Diffusion?
 ```
 
-Query does not modify the Vault by default. If an answer produces durable knowledge, the agent proposes a Promote operation.
+Query does not modify the Vault by default. If the answer contains a durable conclusion worth keeping, the agent proposes a Promote operation.
 
 ## Main operating modes
 
@@ -214,7 +231,8 @@ One to ten material page changes are within ordinary ingest authority. If more t
 - Start from `wiki/Home.md`.
 - Use Search to find text.
 - Use Backlinks and Outgoing Links to understand relationships.
-- Graph View excludes `_system`, `raw`, and `inbox`.
+- Use the global Graph after several ingests to see topic clusters, bridge pages, and isolated areas. Graph View excludes `_system`, `raw`, and `inbox`.
+- Use Local Graph only when you want the immediate neighborhood of one connected page; it is expected to be sparse in a new Wiki.
 - New attachments default to `inbox/attachments/` before ingest moves them into the appropriate raw layer.
 
 `_system/index.md` is a compact candidate catalog for agents. It is not a semantic knowledge page and must not be treated as evidence.
@@ -231,13 +249,14 @@ If Properties are still not visible:
 
 You can also enable Obsidian's **Properties view** core plugin to inspect properties used across the Vault. It is not a Knowledge_Wiki runtime dependency.
 
-### How do I open the Local Graph?
+### Global Graph and Local Graph
 
-1. Open the knowledge page you want to inspect.
-2. Open the Command Palette (`Cmd+P` on macOS, usually `Ctrl+P` on Windows and Linux).
-3. Search for and run **Open local graph**.
+**Graph view** is an Obsidian core plugin. If graph commands are missing, enable it under **Settings → Core plugins → Graph view**.
 
-If the command is missing, verify that **Graph view** is enabled under **Settings → Core plugins**. Local Graph shows only pages connected to the current page. A sparse graph is normal when the Wiki is small; never manufacture links merely to improve its appearance.
+- To open the global Graph, use the ribbon's **Open graph view** button or run **Open graph view** from the Command Palette. It shows the whole Vault and becomes useful once several sources have created enough relationships to reveal clusters and gaps.
+- To open a Local Graph, first open a knowledge page and run **Open local graph** from the Command Palette (`Cmd+P` on macOS, usually `Ctrl+P` on Windows and Linux). It shows only notes connected to the active page and can expand by depth.
+
+For a new or lightly connected Wiki, Search, Backlinks, Outgoing Links, and the global Graph are usually more informative than Local Graph. A sparse graph is normal; never manufacture links merely to make either graph look richer.
 
 ## Reviewing and recovering changes
 
