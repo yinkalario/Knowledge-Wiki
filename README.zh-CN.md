@@ -48,6 +48,43 @@ Karpathy-style LLM Wiki 的核心想法是改变这个循环：让 LLM 把新资
 
 这些内容应留在你的 operational vault 或其他专用系统中。
 
+## 仓库与 Vault 目录结构
+
+应把整个仓库根目录作为 Obsidian Vault 打开，而不是只打开 `wiki/`。各个顶层目录承担不同职责：
+
+```text
+Knowledge_Wiki/
+├── wiki/                 编译后、可供人直接阅读的知识
+│   ├── Home.md           起始页和导航入口
+│   ├── concepts/         概念、机制和方法
+│   ├── entities/         模型、工具、数据集、人物和组织
+│   ├── sources/          针对单个来源的可复用笔记
+│   ├── questions/        开放问题和 hypotheses
+│   └── syntheses/        跨来源比较和结论
+├── _system/              Agent protocol 和 durable bookkeeping
+│   ├── SCHEMA.md         知识模型与页面规则
+│   ├── WORKFLOW.md       Ingest、Query、Promote 和 Lint 流程
+│   ├── DECISIONS.md      已接受的架构决定及其理由
+│   ├── templates/        五种知识页面的模板
+│   └── index、manifest、STATE 和 log 文件
+├── raw/                  为核验而保留的 canonical evidence
+│   ├── papers/           原始论文和报告
+│   ├── web/              抓取的网页和 snapshots
+│   ├── conversations/    Promote 后的 conversation evidence
+│   ├── assets/           归属于 raw source 的附件
+│   └── other/            其他 canonical evidence
+├── inbox/                等待 Ingest 的资料投递区
+│   └── attachments/      随 inbox source 投递的附件
+├── assets/               Wiki 自身使用的图片和其他文件
+├── .obsidian/            这个 Vault 共用的 Obsidian 配置
+├── AGENTS.md             Codex 入口文件
+├── CLAUDE.md             Claude Code 入口文件
+├── README*.md            用户文档
+└── .git/                 指定提交机上的本地 Git 历史
+```
+
+这种分离是有意设计的：`inbox/` 接收资料，`raw/` 保存证据，`wiki/` 保存从证据编译出的知识；`_system/` 让没有旧聊天 context 的新 agent 也能正确接管。`raw/` 和 `inbox/` 中的实际文件不进入 Git，但仍留在 Vault 中由 file-sync service 同步；Git 会保留目录标记，使新 clone 仍具有预期结构。`.git/` 只属于指定提交机本地，不应由文件同步服务同步。
+
 ## 五分钟 Quick Start
 
 ### 1. 安装 Obsidian 和 Web Clipper

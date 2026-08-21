@@ -50,6 +50,43 @@ Poor candidates include:
 
 Keep those in an operational vault or another purpose-built system.
 
+## Repository and Vault layout
+
+Open the repository root—not just `wiki/`—as the Obsidian Vault. Each top-level directory has a distinct role:
+
+```text
+Knowledge_Wiki/
+├── wiki/                 Compiled, human-readable knowledge
+│   ├── Home.md           Starting page and navigation
+│   ├── concepts/         Ideas, mechanisms, and methods
+│   ├── entities/         Models, tools, datasets, people, and organizations
+│   ├── sources/          Reusable notes about individual sources
+│   ├── questions/        Open questions and hypotheses
+│   └── syntheses/        Cross-source comparisons and conclusions
+├── _system/              Agent protocol and durable bookkeeping
+│   ├── SCHEMA.md         Knowledge model and page rules
+│   ├── WORKFLOW.md       Ingest, Query, Promote, and Lint procedures
+│   ├── DECISIONS.md      Accepted architecture decisions and rationale
+│   ├── templates/        Templates for the five knowledge-page types
+│   └── index, manifest, STATE, and log files
+├── raw/                  Canonical evidence retained for verification
+│   ├── papers/           Original papers and reports
+│   ├── web/              Captured web pages and snapshots
+│   ├── conversations/    Promoted conversation evidence
+│   ├── assets/           Attachments owned by raw sources
+│   └── other/            Other canonical evidence
+├── inbox/                Delivery area for material awaiting Ingest
+│   └── attachments/      Attachments delivered with inbox sources
+├── assets/               Images and other files owned by the Wiki itself
+├── .obsidian/            Shared Obsidian configuration for this Vault
+├── AGENTS.md             Codex entrypoint
+├── CLAUDE.md             Claude Code entrypoint
+├── README*.md            User documentation
+└── .git/                 Local Git history on the designated commit machine
+```
+
+The separation is deliberate: `inbox/` receives material, `raw/` preserves the evidence, and `wiki/` contains the knowledge compiled from that evidence. `_system/` tells a fresh agent how to perform that work without relying on previous chat context. Actual files under `raw/` and `inbox/` are excluded from Git but remain inside the Vault for file synchronization; their directory markers remain in Git so a new clone has the expected structure. `.git/` is local to the designated commit machine and should not be synchronized by a file-sync service.
+
 ## Five-minute Quick Start
 
 ### 1. Install Obsidian and the Web Clipper
