@@ -1,0 +1,23 @@
+# Operating-system noise
+.DS_Store
+Thumbs.db
+
+# Obsidian per-device UI state and sync-conflict copies
+.obsidian/workspace*.json
+
+# Disposable runtime and temporary files
+_runtime/
+*.tmp
+*.temp
+*.swp
+*~
+
+# Local credentials and environment overrides
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+.codex/
+
+# Obsidian trash is recoverable UI state, not knowledge
+.trash/

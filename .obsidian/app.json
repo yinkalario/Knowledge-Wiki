@@ -1,0 +1,6 @@
+{
+  "attachmentFolderPath": "inbox/attachments",
+  "alwaysUpdateLinks": true,
+  "newLinkFormat": "shortest",
+  "useMarkdownLinks": false
+}
