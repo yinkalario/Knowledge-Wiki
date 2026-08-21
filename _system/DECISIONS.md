@@ -107,4 +107,12 @@
 - `raw/` 仍是 Vault 内的 canonical evidence，由 file-sync service 保持跨设备可用，并由独立、版本化、最好异地的备份提供灾难恢复。
 - `_system/manifest.json` 继续进入 Git，保存 raw path、来源标识和 SHA-256；hash 只能验证内容，不能恢复缺失 raw。
 - `.git/` 保持在指定提交机本地，不通过 file-sync service 跨设备复制。
+- 没有 `.git/` 的设备可以执行 ingest 和 lint，但必须保留 inbox 副本并报告待提交改动；提交机在文件同步后重新 diff、lint 和 commit。
 - 用户自行 ingest 的 raw/inbox 内容从首次创建起即被 `.gitignore` 排除；starter 只保留目录 `.gitkeep`。
+
+## 2026-08-21 — 临时处理优先使用 Vault 外的 OS temp
+
+- Ingest 中的 extraction、rendering、OCR 和 download staging 优先使用 Vault 外的 OS temporary directory，避免无意义的中间产物被 file-sync service 传播。
+- 必须在 Vault 内处理时，统一使用 Git-ignored `_runtime/<operation-id>/`，不创建 ad hoc 顶层 `tmp/` 或 `temp/`。
+- Runtime 只容纳可重建的中间产物；canonical raw、compiled knowledge 和 bookkeeping 必须进入已定义的 durable paths。
+- 该规则属于跨机器、跨 agent 的可移植操作协议，不记录某台设备的个人操作偏好。

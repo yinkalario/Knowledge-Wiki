@@ -11,6 +11,14 @@
 - 所有 durable paths 使用 Vault-relative path。
 - 普通 additive ingest 不要求逐页审批；高风险操作按下文暂停确认。
 
+### Disposable processing workspace
+
+- PDF extraction、rendering、OCR、download staging 和其他中间产物优先使用 Vault 外的 OS temporary directory。
+- 只有工具或 sandbox 要求 workspace-local scratch 时才使用 `_runtime/<operation-id>/`；`_runtime/` 是可丢弃、可重建且被 Git 忽略的运行时空间。
+- 不在 Vault 顶层自行创建 `tmp/`、`temp/` 或其他未定义的 scratch 目录。
+- Durable raw、Wiki 知识和 bookkeeping 在 operation 成功前必须写入它们的 canonical paths；temporary workspace 不得成为唯一副本，也不得出现在 manifest 或 durable links 中。
+- 操作报告应说明任何未清理的 workspace-local runtime residue；其存在不代表 ingest 成功。
+
 ## 2. Session orientation
 
 按任务读取最小必要上下文：
@@ -275,6 +283,8 @@ Manifest key 是 Vault-relative raw path。`canonical_id` 可保存 DOI、arXiv 
 
 - 一个 ingest 或 maintenance operation 对应一个逻辑 diff。
 - 写入后先 lint、检查 `git diff`，再按用户的 Git 策略提交。
+- 当前设备没有 `.git/` 时，agent 仍可完成 Ingest 的 durable writes 和非 Git lint，但不得声称已检查 diff 或已提交；必须保留 inbox 副本，报告精确的 created/updated files、验证结果和待提交状态。
+- 提交机等待 file sync 完成后，重新检查 `git status`、diff、manifest/raw 一致性和 lint，再作为一个逻辑 operation 提交。
 - 若 operation 包含 verified inbox cleanup，必须先完成 commit，再清理已验证的未跟踪 inbox 临时副本。
 - Git 跟踪 `wiki/`、`_system/`、文档和目录 `.gitkeep`；`raw/` 与 `inbox/` 的实际内容通过 `.gitignore` 排除，但必须继续保留在 Vault 中。
 - File-sync service 负责跨设备同步 `raw/`、`inbox/` 和普通 Vault 文件；独立、版本化、最好异地的备份负责 raw disaster recovery。Manifest hash 只验证完整性，不能恢复缺失文件。

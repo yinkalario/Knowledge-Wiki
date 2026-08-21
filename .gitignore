@@ -6,6 +6,7 @@ Thumbs.db
 .obsidian/workspace*.json
 
 # Disposable runtime and temporary files
+# Ad hoc top-level tmp/ or temp/ directories are intentionally not ignored; use OS temp or _runtime/ per WORKFLOW.md.
 _runtime/
 *.tmp
 *.temp
