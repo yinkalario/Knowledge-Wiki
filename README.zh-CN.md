@@ -265,7 +265,9 @@ Codex 和 Claude Code 都可以维护本 Wiki，但同一时间只能有一个 c
 
 Synology Drive、iCloud Drive、Dropbox 等 file-sync service 只负责文件同步，不负责协调并发写入。不要在两台机器、两个 agent 或 Obsidian 与自动工具之间同时修改同一组文件。切换前确认同步已完成。
 
-Git 历史是本地审计机制；不要假设隐藏的 `.git` 目录一定会被 file-sync service 同步或备份。
+Git 历史用于审计 `wiki/`、`_system/`、文档和目录标记。`raw/` 与 `inbox/` 的实际内容留在 Vault 中由文件同步服务跨设备同步，但不进入 Git；raw evidence 必须另有独立、版本化的备份，因为 manifest hash 不能恢复缺失文件。
+
+`.git/` 只保留在指定提交机本地，并从 Synology Drive 或其他文件同步服务中排除。其他设备可以编辑同步后的普通 Vault 文件，不需要携带 Git metadata。
 
 ## FAQ
 

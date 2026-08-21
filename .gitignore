@@ -21,3 +21,11 @@ _runtime/
 
 # Obsidian trash is recoverable UI state, not knowledge
 .trash/
+
+# Externally managed evidence and delivery content; keep directory markers in Git
+/raw/**
+!/raw/**/
+!/raw/**/.gitkeep
+/inbox/**
+!/inbox/**/
+!/inbox/**/.gitkeep

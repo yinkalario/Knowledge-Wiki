@@ -267,7 +267,9 @@ A future agent can take over as long as it can read and write ordinary files, se
 
 File-sync services such as Synology Drive, iCloud Drive, or Dropbox synchronize files but do not coordinate concurrent writers. Do not edit the same set of files simultaneously from two computers, two agents, or Obsidian and an automation tool. Before switching, verify that synchronization has completed.
 
-Git history is a local audit mechanism. Do not assume that the hidden `.git` directory is automatically synchronized or backed up by your file-sync service.
+Git history is a local audit mechanism for `wiki/`, `_system/`, documentation, and directory markers. Actual `raw/` and `inbox/` content stays in the Vault for file synchronization but is excluded from Git; keep an independent, versioned backup of raw evidence because manifest hashes cannot restore missing files.
+
+Keep `.git/` local to the designated commit machine and exclude it from Synology Drive or any other file-sync service. Other devices may edit the synchronized ordinary Vault files without carrying Git metadata.
 
 ## FAQ
 

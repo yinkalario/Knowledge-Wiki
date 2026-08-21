@@ -100,3 +100,11 @@
 - `SCHEMA.md` 与 `WORKFLOW.md` 维护 current truth；`DECISIONS.md` 与 `log.md` 保留历史，Git 提供完整 diff 和恢复能力。
 - 创建 archive 目录、移动历史记录、拆分权威协议、分片 index/manifest 或改变 read order 前，agent 必须先提供具体方案并获得用户确认。
 - 当前没有真实归档需求，因此不创建 archive 目录，也不引入 lifecycle scripts 或额外基础设施。
+
+## 2026-08-21 — Raw 与 inbox 不由 Git 跟踪
+
+- Git 跟踪 compiled Wiki、`_system/`、文档和用于保留目录结构的 `.gitkeep`，不跟踪 `raw/` 与 `inbox/` 的实际内容。
+- `raw/` 仍是 Vault 内的 canonical evidence，由 file-sync service 保持跨设备可用，并由独立、版本化、最好异地的备份提供灾难恢复。
+- `_system/manifest.json` 继续进入 Git，保存 raw path、来源标识和 SHA-256；hash 只能验证内容，不能恢复缺失 raw。
+- `.git/` 保持在指定提交机本地，不通过 Synology Drive 或其他 file-sync service 跨设备复制。
+- 用户自行 ingest 的 raw/inbox 内容从首次创建起即被 `.gitignore` 排除；starter 只保留目录 `.gitkeep`。

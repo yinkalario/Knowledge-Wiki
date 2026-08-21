@@ -60,7 +60,7 @@ Capture 后使用可用的 SHA-256 工具计算 hash。Hash 属于机械步骤�
 5. 相关 source-owned attachments 已分别 capture 并验证，或确认不需要保留；
 6. inbox source 未被 Git 跟踪，也不是用户的唯一副本。
 
-任一条件不满足时保留原文件并报告原因。未能唯一归属的附件也必须保留。此规则不授权删除 `raw/`、`wiki/` 或任何未验证文件。Cleanup 在 operation report 中列出；canonical raw 和 Git history 是恢复依据。
+任一条件不满足时保留原文件并报告原因。未能唯一归属的附件也必须保留。此规则不授权删除 `raw/`、`wiki/` 或任何未验证文件。Cleanup 在 operation report 中列出；canonical raw 与独立、版本化的备份是 evidence recovery 依据，Git history 不承担 raw 恢复职责。
 
 ## 4. Duplicate gate
 
@@ -276,6 +276,9 @@ Manifest key 是 Vault-relative raw path。`canonical_id` 可保存 DOI、arXiv 
 - 一个 ingest 或 maintenance operation 对应一个逻辑 diff。
 - 写入后先 lint、检查 `git diff`，再按用户的 Git 策略提交。
 - 若 operation 包含 verified inbox cleanup，必须先完成 commit，再清理已验证的未跟踪 inbox 临时副本。
+- Git 跟踪 `wiki/`、`_system/`、文档和目录 `.gitkeep`；`raw/` 与 `inbox/` 的实际内容通过 `.gitignore` 排除，但必须继续保留在 Vault 中。
+- File-sync service 负责跨设备同步 `raw/`、`inbox/` 和普通 Vault 文件；独立、版本化、最好异地的备份负责 raw disaster recovery。Manifest hash 只验证完整性，不能恢复缺失文件。
+- `.git/` 是提交机的本地状态，不通过 file-sync service 跨设备复制；其他设备可以只编辑同步后的普通 Vault 文件。
 - 不自动执行 destructive Git 操作。
 - File-sync services 只负责同步文件，不提供写入协调。切换机器或 agent 前先等待同步完成。
 
