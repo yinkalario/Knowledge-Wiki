@@ -1,5 +1,9 @@
 **English** | [简体中文](README.zh-CN.md)
 
+<p align="center">
+  <img src="assets/knowledge-wiki-logo.png" alt="Knowledge Wiki logo" width="180">
+</p>
+
 # Knowledge_Wiki
 
 A long-lived personal research knowledge base inspired by Andrej Karpathy's LLM Wiki idea. You choose sources, ask questions, and make final judgments; a replaceable LLM agent continuously compiles raw evidence into a coherent, searchable, and traceable Wiki.

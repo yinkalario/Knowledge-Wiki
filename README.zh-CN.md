@@ -1,5 +1,9 @@
 [English](README.md) | **简体中文**
 
+<p align="center">
+  <img src="assets/knowledge-wiki-logo.png" alt="Knowledge Wiki logo" width="180">
+</p>
+
 # Knowledge_Wiki
 
 一个基于 Andrej Karpathy LLM Wiki 理念的个人长期研究知识库：你选择资料、提出问题和做最终判断；可替换的 LLM agent 负责把 raw evidence 持续编译成 coherent、可检索、可追溯的 Wiki。
