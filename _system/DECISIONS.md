@@ -50,11 +50,11 @@
 - Git 用于 diff、审计和回滚；任何 file-sync service 都只负责文件同步，不提供并发写入协调。
 - Merge、rename、delete、重大冲突和 schema change 必须先获得用户确认；后续确认的 verified inbox cleanup 是唯一狭窄例外。
 
-## 2026-08-20 — 人类文档与个人分享边界
+## 2026-08-20 — 人类文档与 starter 发布边界
 
 - 根目录 `README.md` 是面向人的 Quick Start，不复制权威协议。
 - 正文与 README 默认中文，保留 canonical English terms。
-- 将来分享时导出独立、干净的 starter template，不公开个人 raw、wiki、STATE、manifest、log 或 conversations。
+- 公开 starter 只包含干净骨架和通用协议，不包含维护者的个人 raw、wiki、STATE、manifest、log 或 conversations。
 
 ## 2026-08-20 — Verified inbox cleanup 是狭窄删除例外
 
@@ -106,5 +106,5 @@
 - Git 跟踪 compiled Wiki、`_system/`、文档和用于保留目录结构的 `.gitkeep`，不跟踪 `raw/` 与 `inbox/` 的实际内容。
 - `raw/` 仍是 Vault 内的 canonical evidence，由 file-sync service 保持跨设备可用，并由独立、版本化、最好异地的备份提供灾难恢复。
 - `_system/manifest.json` 继续进入 Git，保存 raw path、来源标识和 SHA-256；hash 只能验证内容，不能恢复缺失 raw。
-- `.git/` 保持在指定提交机本地，不通过 Synology Drive 或其他 file-sync service 跨设备复制。
+- `.git/` 保持在指定提交机本地，不通过 file-sync service 跨设备复制。
 - 用户自行 ingest 的 raw/inbox 内容从首次创建起即被 `.gitignore` 排除；starter 只保留目录 `.gitkeep`。
