@@ -9,8 +9,8 @@
 
 A long-lived personal research knowledge base inspired by Andrej Karpathy's LLM Wiki idea. You choose sources, ask questions, and make final judgments; a replaceable LLM agent continuously compiles raw evidence into a coherent, searchable, and traceable Wiki.
 
-> [!important] Current status
-> This repository is a clean, unused starter template. The v1 structure, real-source workflow, and fresh Codex/Claude Code handoff were validated in a separate private pilot; no pilot sources, compiled knowledge, personal state, or operation history are included here.
+> [!IMPORTANT]
+> **Current status:** This repository is a clean, unused starter template. The v1 structure, real-source workflow, and fresh Codex/Claude Code handoff were validated in a separate private pilot; no pilot sources, compiled knowledge, personal state, or operation history are included here.
 
 ## Why use Knowledge Wiki?
 

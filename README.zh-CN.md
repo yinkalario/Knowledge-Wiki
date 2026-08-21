@@ -9,8 +9,8 @@
 
 一个基于 Andrej Karpathy LLM Wiki 理念的个人长期研究知识库：你选择资料、提出问题和做最终判断；可替换的 LLM agent 负责把 raw evidence 持续编译成 coherent、可检索、可追溯的 Wiki。
 
-> [!important] 当前状态
-> 这是一个干净、尚未使用的 starter template。v1 结构、真实来源 workflow 和 Codex/Claude Code fresh handoff 已在独立的私有 pilot 中验证；本仓库不包含 pilot 来源、compiled knowledge、个人 STATE 或操作历史。
+> [!IMPORTANT]
+> **当前状态：** 这是一个干净、尚未使用的 starter template。v1 结构、真实来源 workflow 和 Codex/Claude Code fresh handoff 已在独立的私有 pilot 中验证；本仓库不包含 pilot 来源、compiled knowledge、个人 STATE 或操作历史。
 
 ## 为什么使用 Knowledge Wiki？
 
