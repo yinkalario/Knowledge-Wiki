@@ -47,9 +47,18 @@ Source note 会包含 `zotero://open-pdf/library/items/ATTACHMENT_KEY?page=7` �
 
 ## 让 agent 帮你配置
 
-把[这份中文 README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.zh-CN.md) 或[英文 README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.md) 交给 ChatGPT 即可。如果它不能打开网页，就粘贴 README 正文。这是手动步骤的替代入口，不需要再安装一遍。
+把[这份中文 README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.zh-CN.md) 或[英文 README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.md) 交给 **ChatGPT、Codex 或 Claude** 都可以，说明与配置提示词不绑定某一家客户端。助手不能打开网页时，粘贴 README 正文；本地 agent 也可以直接读取文件。这是手动步骤的替代入口，不需要再安装一遍。
 
 **先确认 agent 实际拥有的权限。** 没有本机工具的聊天只能解释步骤、生成适合你的命令，不能安装软件、修改 Vault 或访问本地 Zotero。需要直接配置时，使用本地 Codex／Claude Code workspace，或另一个已明确连接并授权本机能力的环境。仅接入 Zotero MCP 不会同时授予 Vault 文件访问权。
+
+| 当前使用环境 | 怎样使用本指南 |
+|---|---|
+| 没有本机工具的 ChatGPT／Claude 聊天 | 读取／粘贴 README，生成适合你的步骤，由你执行本机操作。 |
+| 本地 Codex 桌面版／CLI | 授予 workspace 和执行权限，通过 `AGENTS.md` 接入；按第 4 步配置 MCP，执行共同验收。 |
+| 本地 Claude Code | 授予 workspace 和执行权限，通过 `CLAUDE.md` 接入；按第 5 步配置 MCP，执行同一套验收。 |
+| Claude Desktop | 按第 5 步连接 Zotero；写 Wiki 和安装程序还需要相应的本机文件／执行工具，委托前先确认权限。 |
+
+Codex 和 Claude Code 是平等的维护入口，共用 `_system/` 协议、来源身份、模板和 manifest，不需要互相移交聊天历史。客户端配置格式不同：不要把 Codex TOML 粘进 Claude JSON，反之亦然。参见 [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp) 和 [Claude Code MCP](https://code.claude.com/docs/en/mcp)。
 
 复制下面的提示词，填写四个字段：
 
@@ -58,12 +67,14 @@ Source note 会包含 `zotero://open-pdf/library/items/ATTACHMENT_KEY?page=7` �
 https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.zh-CN.md
 
 操作系统：<macOS / Windows>
-客户端：<Codex 桌面版 / Codex CLI / Claude Code / Claude Desktop / 其他>
+目标本地客户端：<Codex 桌面版 / Codex CLI / Claude Code / Claude Desktop / 其他>
 Vault：<现有文件夹或希望新建的位置>
 是否使用 Zotero：<是 / 否>
 
 先确认你是否能访问本机文件、终端和 MCP。没有这些权限时，给我准确的手动步骤，
-不要声称已经执行。能够访问仓库时，读取 AGENTS.md 或 CLAUDE.md 及 _system 权威协议。
+不要声称已经执行。Codex 读取 AGENTS.md，Claude Code 读取 CLAUDE.md，均遵守
+_system 权威协议。按 README 中目标客户端的对应章节配置，不要把当前解释步骤的聊天
+客户端与目标客户端混淆。若要求同时配置两者，分别注册并验收，无需重复安装 tool。
 修改前检查已安装程序与现有配置，复用可用组件。修改客户端配置前先备份，再定向合并，
 保留其他 MCP。新 Vault 使用公开 starter，不要覆盖已有个人 Wiki。
 
@@ -347,6 +358,8 @@ Projects／Archive 受保护。复用已有 roots；缺失或含义不明确时�
 - **绑定：** 稳定库身份和 collection keys 与实时数据一致。
 - **写入：** 写入路线可用；首次真实 ingest 再测试增量增删与回读。
 - **Wiki 访问：** agent 具备 Vault 本机文件读写能力；只读验收不必创建测试文件。
+
+如果同时使用 Codex 和 Claude Code，在两个客户端分别对同一文献库／PDF 执行这份验收，确认 attachment key 和 SHA-256 一致。一边通过不代表另一边已连接。随后在另一客户端开启新会话，只依靠 adapter 和 Wiki 文件查询已有 Source，不重新 ingest，也不修改文件。每个结果单独记录；文档支持不等于已经完成端到端实测。
 
 首次 Source note 出现后，在**每台桌面设备**从 Obsidian 点击一个页码链接，确认打开正确 PDF 和页码。这项检查验证系统链接处理程序，与 MCP 读取和文件 hash 核验分别进行。
 

@@ -47,9 +47,18 @@ There is no required vector database, embedding subscription, watcher, or schedu
 
 ## Ask an agent to set it up
 
-You can give [this English README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.md) or the [Chinese README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.zh-CN.md) to ChatGPT. If it cannot fetch the page, paste the README text. This is an alternative to following the manual steps below, not an additional installation.
+You can give [this English README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.md) or the [Chinese README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.zh-CN.md) to **ChatGPT, Codex, or Claude**. The instructions and setup prompt are client-neutral. If the assistant cannot fetch the page, paste the README text; a local agent can read the file directly. This is an alternative to following the manual steps below, not an additional installation.
 
 **Check the agent's actual access first.** A chat with no local tools can explain and tailor commands but cannot install software, edit your Vault, or access local Zotero. Use a local Codex/Claude Code workspace, or another explicitly connected environment with the necessary permissions, for direct setup. Zotero MCP alone does not grant access to your Vault files.
+
+| Your current environment | How to use this guide |
+|---|---|
+| ChatGPT or Claude chat without local tools | Read/paste the README, ask for tailored instructions, and perform local steps yourself. |
+| Local Codex desktop/CLI | Grant workspace and execution access; use `AGENTS.md`, step 4 for MCP, and the common acceptance checks. |
+| Local Claude Code | Grant workspace and execution access; use `CLAUDE.md`, step 5 for MCP, and the same acceptance checks. |
+| Claude Desktop | Connect Zotero using step 5. Wiki writes and installation additionally require suitable local file/execution tools; verify access before delegating. |
+
+Codex and Claude Code are equal maintenance entrypoints: both use the same `_system/` protocol, source identities, templates and manifest. They do not need each other's chat history. Their client configurations differ; do not paste Codex TOML into Claude JSON or vice versa. See [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp) and [Claude Code MCP](https://code.claude.com/docs/en/mcp).
 
 Copy this prompt and fill the four fields:
 
@@ -58,13 +67,16 @@ Help me set up Knowledge Wiki v2 using this README:
 https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.md
 
 OS: <macOS / Windows>
-Client: <Codex desktop / Codex CLI / Claude Code / Claude Desktop / other>
+Target local client: <Codex desktop / Codex CLI / Claude Code / Claude Desktop / other>
 Vault: <existing folder or desired new folder>
 Use Zotero: <yes / no>
 
 First establish whether you have local filesystem, terminal, and MCP access. If not,
 give me the exact manual steps and do not claim to have performed them.
-Read AGENTS.md or CLAUDE.md and the authoritative _system files when available.
+For Codex read AGENTS.md; for Claude Code read CLAUDE.md. Both must follow the
+authoritative _system files. Configure the target client using its own instructions
+in this README, not the client currently explaining them. If both local clients
+are requested, register and verify each independently; do not install the tool twice.
 Inspect existing installations/configuration before making changes. Reuse working
 components. Back up a client config before a targeted merge; preserve other servers.
 For a new Vault use the public starter; never overwrite an existing personal Wiki.
@@ -360,6 +372,8 @@ Accept these results separately:
 - **Binding:** stable library identity and collection keys match the live tree.
 - **Writes:** the route is available; the first real ingest will test incremental add/remove and read-back.
 - **Wiki access:** the agent has local file read/write capability for the Vault; a read-only check does not need to create a test file.
+
+If using both Codex and Claude Code, run this checklist in each client against the same library/PDF; confirm the same attachment key and SHA-256. A pass in one client does not prove the other is connected. Then open a fresh session in the other client, read its adapter and the Wiki files, and query the existing Source without re-ingesting or changing files. Record each result separately; documentation support is not an end-to-end test result.
 
 After the first Source note exists, click one page link from Obsidian on **each desktop** and verify the correct PDF/page opens. This checks the OS link handler, separately from MCP reading and byte-hash verification.
 
