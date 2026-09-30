@@ -18,4 +18,4 @@ Last updated: not yet used
 
 ## Next recommended action
 
-Follow the Quick Start in `README.md`: add one real source to `inbox/` and request Standard Ingest. Alternatively configure the Zotero personal library and collection keys before requesting Zotero Inbox ingest.
+Follow the setup and first-ingest steps in `README.md`: add one real source to `inbox/` and request Standard Ingest. Alternatively configure the Zotero personal library and collection keys before requesting Zotero Inbox ingest.

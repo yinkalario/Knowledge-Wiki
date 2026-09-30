@@ -5,189 +5,445 @@
   Knowledge Wiki
 </h1>
 
-<p align="center"><strong>A vendor-neutral, source-grounded knowledge base maintained by replaceable LLM agents.</strong></p>
+<p align="center"><strong>Read in Zotero. Build reusable knowledge in Markdown. Keep the agent replaceable.</strong></p>
 
-A long-lived personal research knowledge base inspired by Andrej Karpathy's LLM Wiki idea. You choose sources, ask questions, and make final judgments; a replaceable LLM agent continuously compiles raw evidence into a coherent, searchable, and traceable Wiki.
+Knowledge Wiki turns papers, articles, and research discussions into an evolving, source-grounded knowledge base. Inspired by the LLM Wiki approach, it asks an agent to update existing understanding, connect related findings, preserve disagreements, and retain evidence—not merely generate a new summary for every file.
 
 > [!IMPORTANT]
-> **Current status:** v2 supports optional Zotero ingest, exact attachment provenance and Topics/Methods filing while preserving the Vault-only workflow. Configure personal bindings before Zotero use; consult STATE for this Vault's verification status.
+> **V2 supports both Zotero and Vault-only workflows.** Zotero is optional. The setup below covers a local Mac or Windows computer and a personal Zotero library. Shared/group-library automation is outside the current Wiki protocol. Setup instructions were checked on **2026-09-30** against upstream documentation and a local `zotero-mcp` 0.13.1 installation; this is not a claim that every client/OS combination has been tested.
 
-## Why use Knowledge Wiki?
+## Start here
 
-Imagine that you have read dozens of papers and saved hundreds of useful web pages. A normal file-chat or RAG tool can search those files and answer one question, but the answer usually disappears into chat history. The next question starts by searching the same pile again, and important connections remain scattered across separate documents.
+- [What v2 stores and where](#what-v2-stores-and-where)
+- [Ask an agent to set it up](#ask-an-agent-to-set-it-up)
+- [1. Prepare your Vault and agent](#1-prepare-your-vault-and-agent)
+- [2. Prepare Zotero and PDF sync](#2-prepare-zotero-and-pdf-sync)
+- [3. Install Zotero MCP](#3-install-zotero-mcp)
+- [4. Connect Codex](#4-connect-codex)
+- [5. Connect Claude](#5-connect-claude)
+- [6. Enable collection writes](#6-enable-collection-writes)
+- [7. Bind your library and collections](#7-bind-your-library-and-collections)
+- [8. Verify the connection](#8-verify-the-connection)
+- [9. Ingest your first source](#9-ingest-your-first-source)
+- [Troubleshooting](#troubleshooting)
+- [Everyday operations](#main-operating-modes), [Obsidian](#browsing-in-obsidian), [sync and backup](#file-synchronization-and-the-single-writer-rule)
 
-The Karpathy-style LLM Wiki idea changes that loop: let an LLM continually compile new material into a maintained Wiki. Knowledge Wiki turns that idea into a practical, source-grounded Obsidian workflow that can be used every day.
+## What v2 stores and where
 
-### What this project adds
+| Material | Owner and location | What the Wiki retains |
+|---|---|---|
+| PDF imported through Zotero | Zotero stored attachment; Zotero Storage or WebDAV sync | Exact attachment identity, file hash, version, page links, reading coverage, compiled notes; **no second PDF in Vault raw** |
+| PDF delivered to Vault `inbox/` | Canonical copy in `raw/papers/` | Existing Vault-only ingest and citations remain supported |
+| Web Clipper Markdown, local text, web captures | Vault `inbox/` → appropriate `raw/` directory | Original evidence plus compiled knowledge |
+| Zotero highlights/comments/child notes used in compilation | Originals in Zotero; immutable selected snapshots in `raw/other/`, necessary images in `raw/assets/` | What was actually used, original keys/locators and hashes; not a complete PDF backup |
+| Compiled knowledge | `wiki/` | Source, Concept, Entity, Question, Synthesis—still only five page types |
+| Protocol and handoff | `_system/` | Plain Markdown/YAML/JSON; no dependency on a particular model's chat history |
 
-- **Knowledge compounds instead of piling up.** A new paper does not automatically become one more isolated summary. The agent searches what the Wiki already knows, updates existing Concepts and Entities, records durable Questions, and creates a cross-source Synthesis only when it adds a real comparison or conclusion.
-- **Every important claim can be checked.** Vault-delivered PDFs, web snapshots, and other evidence remain under `raw/`; Zotero-delivered PDFs stay in Zotero with registered provenance. Important numbers, quotations, results, and current facts point back to an exact page, section, figure, table, or snapshot.
-- **You choose how deeply a source is read.** Standard Ingest handles everyday material efficiently, Deep Ingest follows the central argument and evidence chain closely, and Exhaustive Ingest supports reproduction, peer review, or section-by-section analysis.
-- **You can ask without polluting the Wiki.** Query is read-only by default. If a discussion produces something worth keeping, Promote compiles only the durable conclusion rather than saving the whole conversation.
-- **The agent is replaceable.** Codex, Claude Code, or another file-based agent can take over from the Vault itself. The durable memory is ordinary Markdown, raw evidence, and small bookkeeping files—not one vendor's chat history or hidden memory.
-- **Cross-device work remains auditable.** Hashes prevent duplicate ingest, the manifest records what each source changed, Git reviews the text history, and raw evidence can be synchronized and backed up separately.
-- **The system stays understandable.** It starts with five page types, Obsidian links, Search, Graph, and plain files. Databases, embeddings, and complex plugins are added only after a real retrieval problem appears.
+Zotero manages literature metadata, reading, annotations and attachments. Obsidian displays the Markdown Wiki and captures non-PDF sources. The agent maintains the knowledge and checks the originals when needed. A Zotero collection is an organizational membership, not a second PDF copy; a paper can belong to several collections.
 
-In practice, this means you can ask, "What does my Wiki currently believe about this topic, why, and which sources disagree?" and receive an answer from one maintained body of knowledge rather than a stack of unrelated summaries.
+Source notes include links such as `zotero://open-pdf/library/items/ATTACHMENT_KEY?page=7`. Obsidian can hand these to the installed Zotero app. The link opens the **current attachment**; the recorded SHA-256 is what lets an agent check that its bytes match the cited version. Keep cited old versions as separate attachments. Collection changes never alter the definition of the PDF hash. Obsidian Graph uses internal Wiki links; external Zotero URLs are not graph nodes.
 
-## What belongs here?
+There is no required vector database, embedding subscription, watcher, or scheduled ingest. Standard Ingest first searches existing summaries and pages, then reads enough original evidence for the task. Deep and Exhaustive are explicit choices.
 
-Good candidates include:
+## Ask an agent to set it up
 
-- academic papers, technical reports, and standards;
-- blogs, official documentation, and important web pages;
-- durable concepts, methods, models, datasets, and tools;
-- open research questions, hypotheses, and cross-source syntheses;
-- durable conclusions from conversations that you explicitly Promote.
+You can give [this English README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.md) or the [Chinese README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.zh-CN.md) to ChatGPT. If it cannot fetch the page, paste the README text. This is an alternative to following the manual steps below, not an additional installation.
 
-Poor candidates include:
+**Check the agent's actual access first.** A chat with no local tools can explain and tailor commands but cannot install software, edit your Vault, or access local Zotero. Use a local Codex/Claude Code workspace, or another explicitly connected environment with the necessary permissions, for direct setup. Zotero MCP alone does not grant access to your Vault files.
 
-- daily notes, reminders, tasks, and deadlines;
-- temporary working notes;
-- full email or chat archives;
-- uncurated bookmark or PDF dumps;
-- secrets, API keys, or private material that should not be sent to the active model.
+Copy this prompt and fill the four fields:
 
-Keep those in an operational vault or another purpose-built system.
+```text
+Help me set up Knowledge Wiki v2 using this README:
+https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.md
+
+OS: <macOS / Windows>
+Client: <Codex desktop / Codex CLI / Claude Code / Claude Desktop / other>
+Vault: <existing folder or desired new folder>
+Use Zotero: <yes / no>
+
+First establish whether you have local filesystem, terminal, and MCP access. If not,
+give me the exact manual steps and do not claim to have performed them.
+Read AGENTS.md or CLAUDE.md and the authoritative _system files when available.
+Inspect existing installations/configuration before making changes. Reuse working
+components. Back up a client config before a targeted merge; preserve other servers.
+For a new Vault use the public starter; never overwrite an existing personal Wiki.
+
+If you can execute locally, install missing prerequisites and zotero-mcp-server[pdf],
+register one local STDIO server using its actual absolute executable path, and verify
+it. Use local Zotero reads. For automatic Topics/Methods filing, check the installed
+Zotero version and configure its supported write route. Let me complete account
+sign-in, secret entry, and Zotero authorization dialogs locally; never print secrets.
+Keep client config/credentials outside the Vault. Do not run install-skill, overwrite
+Wiki adapters, build an embedding index, or expose a public tunnel as setup shortcuts.
+
+Resolve my stable personal-library user ID and collection keys, then update only
+_system/zotero-collections.md for this binding. Reuse existing roots. If required
+roots do not exist or meanings are ambiguous, propose the exact minimal structure
+before creating it. Projects and Archive are user-managed and protected.
+Run the read-only acceptance checks below. Do not ingest, move papers, or rewrite
+existing collections merely to test setup. Report what passed, what was actually
+changed, remaining manual actions, and the exact first-ingest prompt I can use.
+```
+
+Ordinary ChatGPT web developer-mode connections use a remote MCP endpoint, not the local STDIO command below. Account capabilities vary. Remote MCP also does not by itself provide local Vault access. This guide uses local clients; it does not publish Zotero through an unauthenticated tunnel. See [OpenAI's developer-mode guide](https://developers.openai.com/api/docs/guides/developer-mode) if you intentionally need a separate remote deployment.
+
+<a id="five-minute-quick-start"></a>
+
+## 1. Prepare your Vault and agent
+
+1. Install [Obsidian](https://obsidian.md/download). For web-to-Markdown capture, optionally install [Obsidian Web Clipper](https://obsidian.md/clipper).
+2. Get the **public starter**, not another person's active Vault. Download **Code → Download ZIP** from [the repository](https://github.com/yinkalario/Knowledge-Wiki), extract it, and choose a private working folder. With Git installed, the equivalent is:
+
+   ```bash
+   git clone https://github.com/yinkalario/Knowledge-Wiki.git Knowledge_Wiki
+   ```
+
+   A clone still has the public starter as `origin`; it is not your personal backup remote. Before publishing your own commits, configure your own private repository. ZIP users can work without Git and initialize a private repository later.
+3. In Obsidian choose **Open folder as vault**, selecting the whole folder containing `_system/`, `wiki/`, `raw/`, `inbox/`, and the adapters.
+4. Install/sign in to your chosen local client: [Codex](https://learn.chatgpt.com/docs/quickstart) or [Claude Code](https://code.claude.com/docs/en/overview). Add/open the Vault root as the local workspace. A cloud checkout is not automatically connected to the Zotero running on your computer.
+5. Ask: “Read the repository instructions and orient yourself to this Wiki. Do not modify files yet.” Codex uses `AGENTS.md`; Claude Code uses `CLAUDE.md`; both obey `_system/`.
+
+Do not copy starter files wholesale over an existing Vault: keep its knowledge, raw, manifest and state. **Without Zotero, skip steps 2–8 and use the Vault entry in step 9.**
+
+Versions are Git **branches**: `main` is the latest maintained version; `v1` preserves the pre-Zotero edition; `v2` is the V2 release line. New users start with `main`. Branches do not synchronize themselves; repository maintainers publish V2 updates to both `main` and `v2`.
+
+<a id="zotero-in-v2-optional"></a>
+
+## 2. Prepare Zotero and PDF sync
+
+Install [Zotero and, optionally, Zotero Connector](https://www.zotero.org/download/). Use Zotero 7+ for local access; the write route is chosen in step 6. Better BibTeX is optional for citation keys and is **not required** by this Wiki or MCP setup.
+
+1. Sign in under **Zotero Settings → Sync** on each device. Metadata and annotations use Zotero account sync. Choose Zotero Storage or WebDAV for attachments; for WebDAV enter your provider/NAS URL and credentials in Zotero and complete **Verify Server**. WebDAV syncs attachment files, not the live Zotero database. See [Zotero syncing](https://www.zotero.org/support/sync) and [Sync settings](https://www.zotero.org/support/preferences/sync).
+2. Import one PDF as a **stored attachment**, using a paper's metadata record when available. Open it in Zotero to ensure it is downloaded and readable. A linked file outside Zotero storage is not the ordinary Zotero file-sync route. See [adding items](https://www.zotero.org/support/adding_items_to_zotero).
+3. Enable **Settings → Advanced → Miscellaneous → Allow other applications on this computer to communicate with Zotero**. On macOS Settings is in the Zotero menu; on Windows it is under Edit. Keep Zotero running during local MCP use. See [upstream local setup](https://github.com/54yyyu/zotero-mcp/blob/main/docs/getting-started.md#configure-zotero).
+
+The local managed/downloaded PDF is necessary for local reading and hashing; keeping PDFs in Zotero does not mean the computer has no PDF bytes. Do not move `zotero.sqlite` into your NAS/Obsidian sync folder. iPad/iPhone/Android can continue reading and annotating in Zotero; install MCP only on computers where the agent will read originals.
+
+## 3. Install Zotero MCP
+
+This guide uses the third-party [54yyyu/zotero-mcp](https://github.com/54yyyu/zotero-mcp) project. It is not an OpenAI- or Zotero-official server. A similarly named plugin in a directory may use another implementation: do not configure two copies accidentally.
+
+Use **one installation method**. Below, `uv` manages an isolated Python tool environment. The `pdf` extra supplies page-image support; semantic search is unnecessary for the Wiki's normal workflow. Package extras and requirements are defined in the project's [package configuration](https://github.com/54yyyu/zotero-mcp/blob/main/pyproject.toml).
+
+### macOS: Terminal
+
+If `uv --version` works, skip its installation. Otherwise use the [official uv installer](https://docs.astral.sh/uv/getting-started/installation/):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Close and reopen Terminal, then run:
+
+```bash
+uv --version
+uv python install 3.12
+uv tool install --python 3.12 "zotero-mcp-server[pdf]"
+uv tool update-shell
+```
+
+Open a new Terminal again and verify:
+
+```bash
+zotero-mcp version
+command -v zotero-mcp
+uv tool dir --bin
+```
+
+Record the actual executable path, for example `/Users/YOUR_NAME/.local/bin/zotero-mcp`. Your installation may use a different directory.
+
+### Windows: native PowerShell
+
+For a beginner using native Windows Zotero, use native PowerShell and a native client. WSL is an optional separate environment; it is not required and is not automatically simpler for this local integration.
+
+If `uv --version` fails, run the [official Windows installer](https://docs.astral.sh/uv/getting-started/installation/):
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Close and reopen PowerShell, then run:
+
+```powershell
+uv --version
+uv python install 3.12
+uv tool install --python 3.12 "zotero-mcp-server[pdf]"
+uv tool update-shell
+```
+
+Open a new PowerShell window and verify:
+
+```powershell
+zotero-mcp version
+(Get-Command zotero-mcp).Source
+uv tool dir --bin
+```
+
+Record the real `.exe` path, for example `C:\Users\YOUR_NAME\.local\bin\zotero-mcp.exe`. If lookup still fails, inspect the directory printed by `uv tool dir --bin` and restart the client after updating PATH. Do not paste a Mac path into Windows.
+
+If the package is already installed with uv but lacks PDF support, record `zotero-mcp version` and use `uv tool install --force "zotero-mcp-server[pdf]"`, then reconnect the client. This may update the package. If it was installed with pipx/pip, use that same environment instead of layering another installation. See [uv tool environments](https://docs.astral.sh/uv/guides/tools/).
+
+**Do not run `zotero-mcp install-skill` for this setup:** it may modify agent entrypoints. We use MCP and retain this Wiki's adapters. `zotero-mcp setup` is an alternative client configurator, not a prerequisite; avoid running it on top of a working manual configuration. No `update-db`, embedding model, or OpenAI API key is needed for the baseline route.
+
+## 4. Connect Codex
+
+Choose **one** of GUI, config file, or CLI. The program path is the actual output from step 3, not the package name `zotero-mcp-server`. Codex's GUI works without a `codex` executable on your shell PATH.
+
+### Desktop GUI
+
+Open **Settings → MCP servers → Add server**. Some builds expose this as **Plugins → Add → Add MCP server**. Set:
+
+| Field | Value |
+|---|---|
+| Name | `zotero` |
+| Type | `STDIO` |
+| Command to launch | Absolute `zotero-mcp` / `zotero-mcp.exe` path |
+| Arguments | No arguments; remove empty argument rows |
+| Environment variable name | `ZOTERO_LOCAL` — all uppercase |
+| Environment variable value | `true` |
+| Environment passthrough | Empty for this baseline |
+| Working directory | Leave unset |
+
+Save, enable the server, restart/reconnect it, and start a new chat if the tool list has not refreshed. The installed server defaults to STDIO when invoked without arguments. [Official Codex MCP setup](https://learn.chatgpt.com/docs/extend/mcp).
+
+### Config file alternative
+
+Merge into the active user-level `~/.codex/config.toml` (Windows normally `%USERPROFILE%\.codex\config.toml`; a custom `CODEX_HOME` changes the location). Preserve existing settings and avoid a duplicate `[mcp_servers.zotero]` table. Use the GUI's active configuration if unsure.
+
+macOS example:
+
+```toml
+[mcp_servers.zotero]
+command = "/Users/YOUR_NAME/.local/bin/zotero-mcp"
+
+[mcp_servers.zotero.env]
+ZOTERO_LOCAL = "true"
+```
+
+Windows example—TOML literal quotes preserve backslashes:
+
+```toml
+[mcp_servers.zotero]
+command = 'C:\Users\YOUR_NAME\.local\bin\zotero-mcp.exe'
+
+[mcp_servers.zotero.env]
+ZOTERO_LOCAL = "true"
+```
+
+Keep these machine-specific settings outside the shared Vault. [Configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
+
+### CLI alternative
+
+Only if the Codex CLI is installed and `codex --version` works:
+
+```bash
+codex mcp add zotero --env ZOTERO_LOCAL=true -- "/ABSOLUTE/PATH/TO/zotero-mcp"
+codex mcp list
+```
+
+The same command works in native PowerShell with the actual Windows `.exe` path. `command not found: codex` means this CLI route is unavailable; use the desktop GUI or config-file route. [Official CLI commands](https://learn.chatgpt.com/docs/developer-commands).
+
+## 5. Connect Claude
+
+Skip this step if you only use Codex. Multiple configured clients are fine; only one may write the Wiki at a time.
+
+### Claude Code
+
+After installing/signing in to Claude Code, run this one-line command with your real executable path:
+
+```bash
+claude mcp add --scope user --env ZOTERO_LOCAL=true --transport stdio zotero -- "/ABSOLUTE/PATH/TO/zotero-mcp"
+claude mcp get zotero
+```
+
+On native Windows use the `.exe` path. Restart Claude Code in the Vault folder and run `/mcp` to check the connection. User scope keeps machine configuration outside the shared repository. If `zotero` already exists, inspect/edit it instead of adding a duplicate. [Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
+
+### Claude Desktop
+
+Use **Settings → Developer → Edit Config**, where available, to locate the active `claude_desktop_config.json`. Typical locations are `~/Library/Application Support/Claude/` on macOS and `%APPDATA%\Claude\` on Windows; alternate builds may differ. Merge this entry with any existing `mcpServers` and fully restart Claude Desktop:
+
+```json
+{
+  "mcpServers": {
+    "zotero": {
+      "command": "/Users/YOUR_NAME/.local/bin/zotero-mcp",
+      "env": { "ZOTERO_LOCAL": "true" }
+    }
+  }
+}
+```
+
+For Windows replace `command` with your path and **double backslashes in JSON**, for example `"C:\\Users\\YOUR_NAME\\.local\\bin\\zotero-mcp.exe"`. [Upstream Claude client setup](https://github.com/54yyyu/zotero-mcp/blob/main/docs/getting-started.md#integrating-with-claude-desktop-and-claude-code).
+
+A connected Claude Desktop Zotero server enables literature tools. Maintaining this Wiki additionally requires explicitly granted access to the Vault files and its protocol. If that is absent, use Claude Code for Wiki writes.
+
+## 6. Enable collection writes
+
+Local reads alone cannot guarantee automatic filing. The Wiki needs incremental collection membership writes and, when justified, category creation. It does **not** need permission to rewrite every paper's metadata as part of ingest.
+
+### Zotero 10+: local authorization
+
+With Zotero open, run:
+
+```bash
+zotero-mcp authorize-local
+```
+
+Approve the Zotero dialog yourself; choose **Always Allow** if you want persistent access. The tool stores the local authorization in its user configuration outside the Vault. Restart/reconnect the MCP server, then check:
+
+```bash
+zotero-mcp authorize-local --status
+```
+
+Alternatively ask the connected agent to inspect `zotero_write_capabilities` and, if needed, invoke `zotero_authorize_local_writes`. A configured capability is not proof a real write succeeded; first-ingest read-back provides that verification. [Local write authorization](https://github.com/54yyyu/zotero-mcp/blob/main/docs/configuration.md#local-write-support).
+
+### Older Zotero: local reads + web writes
+
+1. Sign in at [Zotero API keys](https://www.zotero.org/settings/keys). Create a key for your personal library with the required library read/write access. Record the numeric **user ID** shown there.
+2. Keep `ZOTERO_LOCAL=true`. In the chosen MCP client's private environment settings add `ZOTERO_API_KEY` (the key), `ZOTERO_LIBRARY_ID` (that numeric user ID), and `ZOTERO_LIBRARY_TYPE=user`. Enter the secret locally; do not paste it into chats, README, or Vault files.
+3. Reconnect MCP. Ask it to inspect write capabilities. Allow Zotero sync to finish after web writes before verifying desktop state.
+
+A NAS password, a Zotero account password, a web API key, and a local-write authorization are different credentials. Web API credentials are unnecessary for local reads and normally unnecessary for authorized Zotero 10 local writes. No write access means compilation can still work, but classification/Inbox completion must remain pending. [Connection modes](https://github.com/54yyyu/zotero-mcp/blob/main/docs/configuration.md#connection-modes).
+
+## 7. Bind your library and collections
+
+Client connection and Wiki configuration are separate. Update the **personal copy** of [`_system/zotero-collections.md`](_system/zotero-collections.md); the public starter intentionally leaves it unconfigured.
+
+Suggested roots:
+
+```text
+00 Inbox
+10 Topics         What the research is about
+20 Methods        How the central method works
+30 Projects       Managed by you
+90 Archive        Managed by you
+```
+
+Reuse existing roots if they serve these roles. When roots are missing, approve a minimal initialization or create them manually in Zotero; there is no need to import someone else's entire taxonomy. For example, `10 Topics/Music & Musical Audio` and `20 Methods/Generative Modeling` are separate axes. Prefer stable, descriptive names over per-paper categories or year prefixes in Topics/Methods.
+
+Ask the agent:
+
+```text
+Configure this Vault's Zotero binding. Read the live personal-library collection tree
+and resolve the stable account user ID and actual Inbox/Topics/Methods keys. Record
+them, the rule revision/date, managed name/key/parent tree and concise assignment
+boundaries in _system/zotero-collections.md. Record Projects/Archive as protected.
+Reuse existing roots. Propose missing or ambiguous roots before creating anything.
+Do not ingest or change existing paper memberships during this setup.
+```
+
+For manual setup, obtain the account user ID from [Zotero's keys page](https://www.zotero.org/settings/keys), use the connected MCP's collection listing to get keys/parents, and fill the matching fields in the configuration file. A local API alias such as `0`, a SQLite library number such as `1`, a collection name, and a stable account ID are not interchangeable. Do not invent keys or put the local attachment directory here.
+
+Ordinary ingest adds suitable Topics/Methods memberships and may create an unambiguous reusable missing category. **Projects and Archive are protected.** Renaming, moving, merging, splitting, or deleting an existing category requires a concrete approved plan and reevaluation of all affected older items. Whole-library discovery is supported when requested; it does not authorize whole-library reclassification.
+
+## 8. Verify the connection
+
+Keep one known PDF downloaded in Zotero. Ask for a **read-only** check:
+
+```text
+Verify Knowledge Wiki v2 setup without ingesting, modifying Zotero, or saving notes.
+Confirm the Vault protocol is readable and identify the active personal library.
+List the configured collection roots; locate one paper I identify, its parent key,
+and its exact PDF attachment key. Resolve the local PDF, calculate SHA-256, read
+one specified physical page as text and one page as an image, and inspect its
+annotations. Distinguish zero annotations from an API error. Check write capability
+without performing a write. Report pass/fail separately for every capability and
+which client/OS you actually tested. Do not expose credentials or build an index.
+```
+
+Accept these results separately:
+
+- **Client:** the MCP is connected and tools can be called; a saved configuration alone is insufficient.
+- **Original evidence:** actual PDF bytes are accessible, a hash was calculated, selected-page text/image reading works. Metadata or an abstract alone does not pass PDF ingest.
+- **Annotations:** actual records or a verified empty response; missing capabilities remain pending.
+- **Binding:** stable library identity and collection keys match the live tree.
+- **Writes:** the route is available; the first real ingest will test incremental add/remove and read-back.
+- **Wiki access:** the agent has local file read/write capability for the Vault; a read-only check does not need to create a test file.
+
+After the first Source note exists, click one page link from Obsidian on **each desktop** and verify the correct PDF/page opens. This checks the OS link handler, separately from MCP reading and byte-hash verification.
+
+## 9. Ingest your first source
+
+### Zotero entry
+
+Put **one selected paper** into the configured `00 Inbox` and ensure its PDF opens locally. Then ask:
+
+```text
+Standard Ingest the paper <title or item key> from Zotero 00 Inbox. Keep its PDF in
+Zotero. Search existing knowledge before creating pages. Record exact attachment
+identity, SHA-256, paper version, physical-page links and actual reading coverage.
+Snapshot only annotations/notes used in compilation. Classify only Topics/Methods;
+preserve Projects and Archive. Add and verify target memberships first. Remove
+only Inbox membership after compilation, annotation handling, bookkeeping and lint
+succeed. Report files changed, classification deltas and any unfinished stage.
+```
+
+Open `wiki/Home.md` and the resulting knowledge pages. A worthwhile paper usually gets a Source note; exact duplicates or sources with no new material need no empty page. Once this pilot works, request “Process Zotero Inbox” for the pending papers.
+
+### Vault entry: works with or without Zotero
+
+Clip a web page to `inbox/` with Obsidian Web Clipper, or place a PDF/Markdown/text file there. Ask: “Standard Ingest the new material in Vault inbox.” The agent preserves canonical raw, checks hashes, updates existing knowledge, and performs verified delivery-copy cleanup when all protocol conditions pass. Vault-delivered PDFs remain supported; they are not silently moved to Zotero.
+
+### Ask questions and resume failures
+
+Ask: “According to my Wiki, explain this paper's Equation 3 and verify the cited page.” Query is read-only; it resolves the original by raw path or exact external reference and checks the hash. If Zotero is unavailable, the answer must distinguish existing compiled coverage from details it cannot reverify.
+
+Exact hashes are compared across Vault and Zotero sources. A completed duplicate reuses compiled knowledge; pending classification or newly used annotations can still be handled. An incomplete ingest resumes its unfinished work. Classification does not trigger PDF re-ingest. Successful filing and Inbox removal are separately recorded so a retry does not start over.
+
+Used annotation snapshots live in `raw/other/`, with source identity, PDF hash, annotation/note keys, locators and content. Their payload hash excludes capture time; changes produce a new snapshot. These snapshots follow Vault raw synchronization/backup, **not Git**, and do not recover a missing PDF. See [SCHEMA §11](_system/SCHEMA.md#11-external-evidence-and-backward-compatible-manifest-v2) and [WORKFLOW §§15–17](_system/WORKFLOW.md#15-zotero-connection-discovery-and-ingest).
+
+## Troubleshooting
+
+| Symptom | Next check |
+|---|---|
+| `codex: command not found` | Use the desktop GUI/config file; CLI installation is optional for GUI setup. |
+| `zotero-mcp` not found | Reopen terminal; inspect `uv tool dir --bin`; use the actual absolute executable path in the client. |
+| MCP saved but disconnected | Start Zotero, enable local communication, verify uppercase `ZOTERO_LOCAL=true`, remove empty argument rows, reconnect and inspect client errors. |
+| Searching works but PDF reading fails | Open/download the exact attachment in Zotero. WebDAV-only remote bytes and metadata are not a local PDF. |
+| `fitz` / PyMuPDF missing, or page image fails | Add the `pdf` extra to the **same** tool environment, then reconnect. A verified local PDF reader is a valid fallback; report which route worked. |
+| Reading works but classification fails | Check local authorization or hybrid key permissions using write capabilities; do not mark Inbox complete. |
+| Tool says no items, wrong library, or key missing | Verify active personal library, sync state and actual root keys. Do not re-ingest solely because another computer has not synced. |
+| Obsidian link opens nothing/wrong content | Verify installed Zotero, matching account/attachment, downloaded PDF and `zotero://` association; compare current bytes with the recorded hash. |
+| PDF hash changed | Register a new snapshot and investigate; do not silently replace old citations. Restore old bytes from Zotero backup if necessary. |
+| Windows Zotero + WSL agent fails | Check which OS runs the MCP, how it reaches Zotero and resolves attachment paths. Prefer a native Windows stack for this guide; never assume localhost/paths cross environments. |
+| Same server appears twice | Keep one deliberate registration per client; inspect a similarly named plugin before adding another server. |
+| Setup keeps proposing embeddings | Baseline Wiki retrieval uses index, summaries and targeted search. Do not run semantic indexing to fix a connection problem. |
+
+More implementation-specific diagnostics: [Zotero MCP troubleshooting](https://github.com/54yyyu/zotero-mcp/blob/main/docs/troubleshooting.md). Never attach an unredacted client config or authorization file to a public issue.
 
 ## Repository and Vault layout
 
-Open the repository root—not just `wiki/`—as the Obsidian Vault. Each top-level directory has a distinct role:
-
 ```text
 Knowledge_Wiki/
-├── wiki/                 Compiled, human-readable knowledge
-│   ├── Home.md           Starting page and navigation
-│   ├── concepts/         Ideas, mechanisms, and methods
-│   ├── entities/         Models, tools, datasets, people, and organizations
+├── wiki/                 Compiled knowledge
+│   ├── Home.md           Human dashboard
 │   ├── sources/          Reusable notes about individual sources
-│   ├── questions/        Open questions and hypotheses
-│   └── syntheses/        Cross-source comparisons and conclusions
-├── _system/              Agent protocol and durable bookkeeping
-│   ├── SCHEMA.md         Knowledge model and page rules
-│   ├── WORKFLOW.md       Ingest, Query, Promote, and Lint procedures
-│   ├── DECISIONS.md      Accepted architecture decisions and rationale
-│   ├── templates/        Templates for the five knowledge-page types
-│   └── index, manifest, STATE, and log files
-├── raw/                  Canonical evidence retained for verification
-│   ├── papers/           Original papers and reports
-│   ├── web/              Captured web pages and snapshots
-│   ├── conversations/    Promoted conversation evidence
-│   ├── assets/           Attachments owned by raw sources
-│   └── other/            Other canonical evidence
-├── inbox/                Delivery area for material awaiting Ingest
-│   └── attachments/      Attachments delivered with inbox sources
-├── assets/               Images and other files owned by the Wiki itself
-├── .obsidian/            Shared Obsidian configuration for this Vault
-├── AGENTS.md             Codex entrypoint
-├── CLAUDE.md             Claude Code entrypoint
-├── README*.md            User documentation
-└── .git/                 Local Git history on the designated commit machine
+│   ├── concepts/         Explanations accumulated across sources
+│   ├── entities/         Models, datasets, tools, people, organizations
+│   ├── questions/        Durable research questions
+│   └── syntheses/        Cross-source comparisons and arguments
+├── _system/              Vendor-neutral protocol and portable state
+│   ├── SCHEMA.md / WORKFLOW.md / DECISIONS.md
+│   ├── zotero-collections.md   Personal binding; unconfigured in starter
+│   ├── templates/        Five page templates
+│   └── index.md / manifest.json / STATE.md / log.md
+├── raw/                  Vault-owned evidence; file sync/backup, not Git
+│   ├── papers/           Vault-delivered PDFs
+│   ├── web/              Web/Markdown captures
+│   ├── conversations/    Explicitly preserved conversation evidence
+│   ├── other/            Other sources and used Zotero note snapshots
+│   └── assets/           Source-owned images
+├── inbox/                Vault delivery area, including attachments/
+├── assets/               Wiki branding/assets
+├── .obsidian/            Shared viewer configuration
+├── AGENTS.md / CLAUDE.md  Thin client adapters
+└── README*.md            Human setup and usage guides
 ```
 
-The separation is deliberate: `inbox/` receives material, `raw/` preserves Vault-owned evidence (Zotero attachments stay in Zotero), and `wiki/` contains the knowledge compiled from that evidence. `_system/` tells a fresh agent how to perform that work without relying on previous chat context. Actual files under `raw/` and `inbox/` are excluded from Git but remain inside the Vault for file synchronization; their directory markers remain in Git so a new clone has the expected structure. `.git/` is local to the designated commit machine and should not be synchronized by a file-sync service.
+Zotero's database/PDF storage and client credentials stay outside this tree. `_system/BOOTSTRAP.md` is historical design input; current authority is SCHEMA → WORKFLOW → DECISIONS. Agents read STATE for maintenance and the compact index for candidate selection. The human README explains how to start; it does not supersede that protocol.
 
-## Five-minute Quick Start
-
-### 1. Install Obsidian and the Web Clipper
-
-- Install [Obsidian](https://obsidian.md/download) for your operating system.
-- Install the official [Obsidian Web Clipper](https://obsidian.md/clipper) browser extension for Chromium-based browsers, Firefox, Safari, or Edge.
-
-Web Clipper is the easiest way to send articles and selected passages into the Wiki as Markdown. It is recommended for capture, but it is not a runtime dependency: PDFs, local files, pasted text, and direct URLs also work.
-
-### 2. Open the entire repository as one Vault
-
-Clone, download, or locate the `Knowledge_Wiki` folder. In Obsidian, choose **Open folder as vault** and select the repository root—the folder that contains `AGENTS.md`, `_system/`, `wiki/`, `raw/`, and `inbox/`.
-
-Do not open only `wiki/` as the Vault. The agent needs the protocol, evidence, inbox, and bookkeeping directories together. If you plan to ingest private or copyrighted material, work from a private personal copy rather than a public fork.
-
-### 3. Connect a file-based agent
-
-Start Codex, Claude Code, or another file-based coding agent with the Vault root as its working directory.
-
-- Codex enters through `AGENTS.md`.
-- Claude Code enters through `CLAUDE.md`.
-- Both follow the same `_system/SCHEMA.md` and `_system/WORKFLOW.md` without needing earlier chat context.
-
-For a first read-only check, ask:
-
-```text
-Read the repository instructions, orient yourself to this Knowledge Wiki, and tell me when you are ready. Do not modify files yet.
-```
-
-Never let two agents write to the Vault at the same time. A device without `.git/` may ingest and lint, but the designated commit machine should review and commit the synchronized changes later.
-
-### 4. Choose a source entry point
-
-Choose one of these paths:
-
-- **Web article:** open Web Clipper, select this Vault, set the destination folder to `inbox/`, review the captured article, and click **Add to Obsidian**.
-- **PDF, Markdown, or text file:** copy the file into `inbox/` with Finder, File Explorer, or your file-sync service.
-- **Zotero PDF:** keep it in Zotero `00 Inbox` and use the Zotero workflow below.
-- **Direct URL or pasted text:** give it to the agent and explicitly request Ingest.
-
-Use `inbox/` as the delivery area. Do not manually place unprocessed sources under `wiki/`; the agent will create canonical raw evidence and compiled pages in the correct locations.
-
-### 5. Run the first Ingest
-
-For ordinary material, Standard Ingest is the default:
-
-```text
-Process the new material in inbox using Standard Ingest.
-```
-
-The agent identifies unprocessed files by manifest and hash, preserves canonical raw evidence, checks for duplicates, searches existing knowledge, updates before creating, validates links and provenance, and reports every created or updated file. If several new sources are present, it lists and processes them in sequence. An inbox delivery copy is removed only after all cleanup conditions pass; otherwise it remains in place with an explanation.
-
-### 6. Open the result and ask a question
-
-Start at `wiki/Home.md`, then open the new Source page and any Concept or Entity pages it updated. Try a read-only Query:
-
-```text
-According to my Wiki, what are the main differences between Flow Matching and Diffusion?
-```
-
-Query does not modify the Vault by default. If the answer contains a durable conclusion worth keeping, the agent proposes a Promote operation.
-
-## Zotero in v2 (optional)
-
-Choose either entry point: continue putting PDF/Markdown/text into Vault `inbox/`, or keep PDFs in Zotero and ask for Zotero ingest. Zotero owns its PDF attachments; the Wiki owns compiled notes and portable provenance. Web Clipper Markdown and other local raw evidence remain in the Vault. The five page types and Standard/Deep/Exhaustive coverage rules are unchanged.
-
-### Connect and initialize
-
-Use a local Zotero adapter on each Mac/Windows computer. The initial supported implementation is [54yyyu/zotero-mcp](https://github.com/54yyyu/zotero-mcp), configured for local access (`ZOTERO_LOCAL=true`); its PDF extra supports page images. Keep Zotero running with local communication enabled and the selected PDF downloaded. Desktop-local storage is Zotero's managed copy, not an extra Vault PDF. Mobile devices continue to read and annotate through Zotero. WebDAV attachment sync and Zotero account metadata/annotation sync do not install MCP on other computers.
-
-Register the executable with each agent using that client's current instructions. Do not run an installer that edits this Vault's `AGENTS.md`/`CLAUDE.md` incidentally. Read-only access is enough for Query; collection filing additionally needs authorized Zotero writes. Do not put credentials or absolute machine paths in the Vault. Before first use, bind the stable account ID and real collection keys in [`_system/zotero-collections.md`](_system/zotero-collections.md). The public starter's bindings are intentionally unconfigured; Vault-only operation remains available.
-
-### Everyday use
-
-```text
-Use Standard Ingest for new papers in Zotero 00 Inbox. Keep PDFs in Zotero. Classify only Topics and Methods, create a clear reusable missing category when necessary, and preserve Projects and Archive. Report original links, hashes, coverage, snapshots, classification changes and anything unfinished.
-```
-
-Explicit paper/collection/full-library discovery is also supported; full-library discovery is not automatic full-library reclassification. Compare PDF hashes across both Zotero and Vault sources. Repeated ingest reuses compiled knowledge but may finish pending classification or preserve newly used annotations. A new DOI/title match alone does not prove identical bytes. Full-library scans use compact, paginated metadata before selected original reading.
-
-When asking a focused question, specify the paper, equation, section or page. The agent resolves the exact attachment, verifies its hash and reads the needed context; Query changes neither the Vault nor Zotero. If Zotero is unavailable, the answer must distinguish previously compiled coverage from unverified original details.
-
-### Source links, snapshots and versions
-
-Source notes retain attachment links, stable source references, physical PDF page numbers, original SHA-256 and actual reading/visual coverage. `sources` continues to list Vault raw paths; optional `source_refs` points to external manifest records. Clicking a Zotero link opens the current attachment; only an agent's hash check verifies the saved file snapshot. Keep cited old versions as distinct attachments. Zotero metadata revision counters are not publication versions. If an old attachment was overwritten or lost, the Wiki can report the mismatch but needs the original or a backup to recover it.
-
-Only annotations or child notes actually used in compilation are preserved as immutable Markdown in `raw/other/`, with necessary images in `raw/assets/`. Snapshot records distinguish quoted paper text, user comments and agent inference; their selected-content hash ignores capture time. They are not full PDF backups. Source pages remain the nodes linked to Concepts/Entities in Obsidian's graph; an external PDF link does not require another PDF copy or a new graph page.
-
-### Filing and safe recovery
-
-Topics describes the research problem; Methods describes central techniques. Projects is entirely user-managed: never add/remove its memberships or change its structure. Archive is also protected. Prefer existing categories, preserve manual memberships, and allow meaningful cross-category filing. Existing category rename/move/merge/split/delete needs a concrete approved plan with reevaluation of all affected old items and descendants. Detected manual structure changes are reviewed at the next user-triggered maintenance/ingest; there is no background watcher.
-
-Compilation and classification have separate durable states. Add and verify target memberships before removing Inbox membership. Remove Inbox only after completed ingest/annotation handling, classification, bookkeeping and lint. A failed stage leaves Inbox pending; retry only unfinished work. Zotero Inbox removal is non-destructive and does not require Git on the current device, unlike deletion of a Vault inbox delivery copy. Report pending commits on non-Git devices. Classification changes do not change PDF hashes or force new compiled notes.
-
-Git can restore Wiki text, not Zotero collection membership. Log before/after deltas for reviewed recovery and preserve intervening human edits. Back up both Vault raw and Zotero originals independently. See WORKFLOW sections 15–17 for exact gates and authority.
-
-### Upgrade and validation
-
-Manifest v2 preserves v1 raw records and adds `external_sources` and `zotero_items`. Existing notes need no bulk rewrite; absent `source_refs` means an empty list. Keep old raw PDFs even if the same paper later appears in Zotero; associate identical content rather than deleting or moving evidence automatically. Do not invent historical reading coverage.
-
-Validate local hashes/links/manifest references separately from live Zotero availability. Exercise one small real Inbox pilot before broader use; report missing dependencies and untested devices. The public starter contains generic protocol and empty state only. The protocol is portable; MCP is a replaceable access layer, not the source of durable memory.
+Keep durable research here, not tasks, reminders, a whole chat archive, or an uncurated file dump. The Wiki becomes useful through maintained explanations and traceable evidence.
 
 ## Main operating modes
 
@@ -201,7 +457,7 @@ Process the new material in inbox.
 
 ### Deep Ingest
 
-Use Deep Ingest for foundational papers, work you expect to cite seriously, or sources whose method, evidence, and limitations need close study. It first maps the paper, covers the core argument and evidence chain, and selectively compiles details that will be useful for future understanding, comparison, citation, or reuse. Low-frequency details that are not compiled remain accessible through locators and can be read from raw evidence during a later Query. Deep costs more tokens, must be requested explicitly, and does not exhaustively inspect every appendix page by default.
+Use Deep Ingest for foundational papers, work you expect to cite seriously, or sources whose method, evidence, and limitations need close study. It first maps the paper, covers the core argument and evidence chain, and selectively compiles details that will be useful for future understanding, comparison, citation, or reuse. Low-frequency details that are not compiled remain accessible through locators and can be read from registered original evidence during a later Query. Deep costs more tokens, must be requested explicitly, and does not exhaustively inspect every appendix page by default.
 
 ```text
 Use Deep Ingest for the new paper in inbox.
@@ -224,18 +480,18 @@ These four approaches complement one another:
 | Build a reliable, reusable research note | Standard Ingest | A structured Source page plus targeted updates to related knowledge |
 | Understand a foundational paper in depth | Deep Ingest | Core argument and evidence-chain coverage with selective durable compilation |
 | Reproduce, review, or examine every material section | Exhaustive Ingest | Material-complete coverage of methods, equations, experiments, appendices, limitations, and reproducibility details |
-| Inspect a particular equation, figure, or experiment | Query | Open only the relevant raw pages and necessary context; do not write by default |
+| Inspect a particular equation, figure, or experiment | Query | Open only the relevant original pages and necessary context; do not write by default |
 
 There is no rule such as “keep exactly one to three equations.” An empirical paper with no important equation should not be forced to include one, while a mathematical paper may require many. In Standard and Deep, the question is whether omitting an equation would obstruct understanding the central contribution, explaining results, comparing methods, or judging reproducibility. Exhaustive covers every material equation. When an equation is retained, explain its symbols, assumptions, role, necessary derivation logic, and source locator.
 
-The “deep” in Deep Ingest means complete understanding of the core argument and evidence chain, not copying every detail into the Wiki. The agent must report what it read, what it inspected visually, and which appendices were deliberately deferred. Later questions can follow locators back to the raw source. Exhaustive Ingest is also not a verbatim copy: references, generic background, and repetition may be compressed, but every detail that could change a research judgment or reproduction result must be examined. Long exhaustive work is processed by section or chapter, with resumable progress recorded in `STATE.md` until all planned coverage is complete.
+The “deep” in Deep Ingest means complete understanding of the core argument and evidence chain, not copying every detail into the Wiki. The agent must report what it read, what it inspected visually, and which appendices were deliberately deferred. Later questions can follow locators back to the registered original. Exhaustive Ingest is also not a verbatim copy: references, generic background, and repetition may be compressed, but every detail that could change a research judgment or reproduction result must be examined. Long exhaustive work is processed by section or chapter, with resumable progress recorded in `STATE.md` until all planned coverage is complete.
 
 ### Promote
 
 When a query or discussion produces durable knowledge, compile it back into the Wiki:
 
 ```text
-This answer is worth keeping. Compile it into the Wiki, preserve raw provenance, update existing pages before creating new ones, and do not save the full conversation.
+This answer is worth keeping. Compile it into the Wiki, preserve original-evidence provenance, update existing pages before creating new ones, and do not save the full conversation.
 ```
 
 ### Research Mode
@@ -312,7 +568,7 @@ One to ten material page changes are within ordinary ingest authority. If more t
 - Use Backlinks and Outgoing Links to understand relationships.
 - Use the global Graph after several ingests to see topic clusters, bridge pages, and isolated areas. Graph View excludes `_system`, `raw`, and `inbox`.
 - Use Local Graph only when you want the immediate neighborhood of one connected page; it is expected to be sparse in a new Wiki.
-- New attachments default to `inbox/attachments/` before ingest moves them into the appropriate raw layer.
+- Attachments added through Obsidian default to `inbox/attachments/`; Zotero attachments remain in Zotero.
 
 `_system/index.md` is a compact candidate catalog for agents. It is not a semantic knowledge page and must not be treated as evidence.
 
@@ -377,7 +633,7 @@ A Source page is not mandatory for every ingest. If a source only strengthens an
 
 ### What does No material mean?
 
-The source is preserved in raw, but it did not add knowledge worth compiling into the current Wiki. The manifest and log record the result without creating an empty page.
+The source is preserved in Vault raw or registered as an external attachment, but it did not add knowledge worth compiling into the current Wiki. The manifest and log record the result without creating an empty page.
 
 ### Must I delete inbox files manually after Ingest?
 

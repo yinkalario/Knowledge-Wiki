@@ -5,187 +5,430 @@
   Knowledge Wiki
 </h1>
 
-<p align="center"><strong>一个由可替换 LLM agent 维护、vendor-neutral、source-grounded 的长期知识库。</strong></p>
+<p align="center"><strong>用 Zotero 阅读文献，用 Markdown 积累知识，让 agent 始终可以替换。</strong></p>
 
-一个基于 Andrej Karpathy LLM Wiki 理念的个人长期研究知识库：你选择资料、提出问题和做最终判断；可替换的 LLM agent 负责把 raw evidence 持续编译成 coherent、可检索、可追溯的 Wiki。
+Knowledge Wiki 把论文、文章和研究讨论编译成持续维护、可以回到原文核验的知识库。它借鉴 LLM Wiki 的方式：让 agent 优先更新已有理解、连接相关发现、保留分歧与证据，而不是每导入一个文件就孤立地生成一份摘要。
 
 > [!IMPORTANT]
-> **当前状态：** v2 支持可选 Zotero ingest、精确附件溯源和 Topics／Methods 分类，同时兼容 Vault-only 工作流。使用 Zotero 前先配置个人绑定；具体核验状态见 STATE。
+> **V2 同时支持 Zotero 和纯 Vault 工作流。** Zotero 是可选组件。下面覆盖 Mac／Windows 本机和 Zotero 个人文献库；群组库自动化不属于当前 Wiki 协议范围。安装说明于 **2026-09-30** 对照上游文档和本机 `zotero-mcp` 0.13.1 核对，不代表每种客户端／操作系统组合均已实测。
 
-## 为什么使用 Knowledge Wiki？
+## 从这里开始
 
-假设你已经读了几十篇论文，也收藏了几百个有用的网页。普通文件问答或 RAG 工具可以搜索这些文件并回答一次问题，但答案通常留在聊天记录里。下次提问又要从同一堆文件重新搜索，不同资料之间的关系也仍然是分散的。
+- [V2 把什么保存在哪里](#v2-把什么保存在哪里)
+- [让 agent 帮你配置](#让-agent-帮你配置)
+- [1. 准备 Vault 和 agent](#1-准备-vault-和-agent)
+- [2. 准备 Zotero 和 PDF 同步](#2-准备-zotero-和-pdf-同步)
+- [3. 安装 Zotero MCP](#3-安装-zotero-mcp)
+- [4. 连接 Codex](#4-连接-codex)
+- [5. 连接 Claude](#5-连接-claude)
+- [6. 开启分类写入权限](#6-开启分类写入权限)
+- [7. 绑定个人文献库和 collections](#7-绑定个人文献库和-collections)
+- [8. 核验连接](#8-核验连接)
+- [9. 第一次 ingest](#9-第一次-ingest)
+- [故障排查](#故障排查)
+- [日常操作](#主要操作方式)、[Obsidian 浏览](#在-obsidian-中浏览)、[同步与备份](#文件同步与-single-writer)
 
-Karpathy-style LLM Wiki 的核心想法是改变这个循环：让 LLM 把新资料持续编译进一个会被维护的 Wiki。Knowledge Wiki 在此基础上，把它做成了一套可以日常使用、source-grounded 的 Obsidian workflow。
+## V2 把什么保存在哪里
 
-### 这个项目主要增加了什么
+| 内容 | 由谁保存、保存在哪里 | Wiki 保留什么 |
+|---|---|---|
+| 从 Zotero 导入的 PDF | Zotero 的 stored attachment；通过 Zotero Storage 或 WebDAV 同步 | 精确附件身份、文件 hash、版本、页码链接、阅读范围、编译笔记；**不在 Vault raw 再复制一份 PDF** |
+| 投递到 Vault `inbox/` 的 PDF | canonical 原件保存在 `raw/papers/` | 继续支持原有 Vault-only ingest 与引用 |
+| Web Clipper Markdown、本地文本、网页快照 | Vault `inbox/` → 对应 `raw/` 目录 | 原始证据及编译后的知识 |
+| 编译时实际使用的 Zotero 高亮、评论、子 note | 原件在 Zotero；所选内容的不可覆盖快照在 `raw/other/`，必要图片在 `raw/assets/` | 实际使用内容、原始 key／定位与 hash；不是完整 PDF 备份 |
+| 编译后的知识 | `wiki/` | Source、Concept、Entity、Question、Synthesis，仍然只有五种页面 |
+| 协议和接管状态 | `_system/` | 普通 Markdown／YAML／JSON，不依赖特定模型的聊天历史 |
 
-- **知识会累积，而不是只堆积摘要。** 新论文不会默认变成又一篇孤立总结。Agent 会先搜索 Wiki 已有内容，更新现有 Concept 和 Entity，记录值得长期追踪的 Question，只在真正形成跨来源比较或结论时创建 Synthesis。
-- **重要结论都可以回去核对。** 从 Vault 导入的 PDF、网页快照和其他证据保留在 `raw/`；从 Zotero 导入的 PDF 留在 Zotero，并登记可核验的来源关联。关键数字、引语、实验结果和时效性事实可以定位到具体 page、section、figure、table 或 snapshot。
-- **你可以决定读多深。** Standard Ingest 高效处理日常资料；Deep Ingest 深入跟踪核心论证和证据链；Exhaustive Ingest 用于复现、审稿或逐节完整技术分析。
-- **提问不会自动污染 Wiki。** Query 默认只读。当讨论产生值得保留的内容时，Promote 只会编译 durable conclusion，而不是把整段 conversation 存起来。
-- **Agent 可以随时替换。** Codex、Claude Code 或其他 file-based agent 都可以仅依靠 Vault 接管。真正持久的 memory 是普通 Markdown、raw evidence 和少量 bookkeeping 文件，而不是某个产品的聊天历史或隐藏 memory。
-- **跨设备工作仍然可审计。** Hash 防止重复 ingest，manifest 记录每个来源影响了什么，Git 审阅文本历史，raw evidence 则可以单独同步和备份。
-- **系统始终可以被人看懂。** v2 仍只使用五种页面、Obsidian links、Search、Graph 和普通文件。只有真实 retrieval problem 出现后，才增加 database、embeddings 或复杂 plugins。
+Zotero 管理文献 metadata、阅读、批注和附件；Obsidian 展示 Markdown Wiki，并可抓取非 PDF 来源；agent 维护知识并在需要时核查原文。Collection 是文章的组织归属，不是 PDF 副本，同一篇文章可以属于多个 collection。
 
-实际使用时，你可以直接问：“我的 Wiki 现在对这个主题的理解是什么，为什么，哪些来源存在分歧？”回答来自一个持续维护的知识体系，而不是一堆互不相干的摘要。
+Source note 会包含 `zotero://open-pdf/library/items/ATTACHMENT_KEY?page=7` 这样的链接，Obsidian 可交给已安装的 Zotero 打开。链接打开的是**当前附件**；记录的 SHA-256 才能让 agent 判断实际文件是否与引用版本一致。被引用的旧版本应保留为独立附件。Collection 的变化不参与 PDF hash 计算。Obsidian Graph 使用 Wiki 内部链接，外部 Zotero URL 本身不是 graph 节点。
 
-## 适合保存什么
+不要求向量数据库、embedding 订阅、watcher 或定时 ingest。Standard Ingest 先检索已有摘要与知识页，再读取任务所需原文；Deep 和 Exhaustive 必须明确选择。
 
-- 学术论文、技术报告和标准；
-- Blog、官方文档和重要网页；
-- 持久概念、方法、模型、数据集和工具知识；
-- 开放研究问题、hypotheses 和跨来源 synthesis；
-- 经过明确 Promote 的 durable conversation conclusions。
+## 让 agent 帮你配置
 
-不适合保存：
+把[这份中文 README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.zh-CN.md) 或[英文 README](https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.md) 交给 ChatGPT 即可。如果它不能打开网页，就粘贴 README 正文。这是手动步骤的替代入口，不需要再安装一遍。
 
-- Daily notes、会议提醒、任务和 deadline；
-- 临时 working notes；
-- Email 或聊天全文归档；
-- 没有筛选的 bookmark/PDF dump；
-- Secrets、API keys 或不应发送给当前模型的私人资料。
+**先确认 agent 实际拥有的权限。** 没有本机工具的聊天只能解释步骤、生成适合你的命令，不能安装软件、修改 Vault 或访问本地 Zotero。需要直接配置时，使用本地 Codex／Claude Code workspace，或另一个已明确连接并授权本机能力的环境。仅接入 Zotero MCP 不会同时授予 Vault 文件访问权。
 
-这些内容应留在你的 operational vault 或其他专用系统中。
+复制下面的提示词，填写四个字段：
+
+```text
+请依据这份 README 帮我配置 Knowledge Wiki v2：
+https://github.com/yinkalario/Knowledge-Wiki/blob/main/README.zh-CN.md
+
+操作系统：<macOS / Windows>
+客户端：<Codex 桌面版 / Codex CLI / Claude Code / Claude Desktop / 其他>
+Vault：<现有文件夹或希望新建的位置>
+是否使用 Zotero：<是 / 否>
+
+先确认你是否能访问本机文件、终端和 MCP。没有这些权限时，给我准确的手动步骤，
+不要声称已经执行。能够访问仓库时，读取 AGENTS.md 或 CLAUDE.md 及 _system 权威协议。
+修改前检查已安装程序与现有配置，复用可用组件。修改客户端配置前先备份，再定向合并，
+保留其他 MCP。新 Vault 使用公开 starter，不要覆盖已有个人 Wiki。
+
+如果可以直接操作本机，请安装缺少的前置工具和 zotero-mcp-server[pdf]，使用真实的
+可执行文件绝对路径注册一个本地 STDIO server，并验证连接。优先本地 Zotero 读取；
+需要自动 Topics/Methods 分类时，检查 Zotero 版本并配置相应写入方式。账号登录、
+密钥输入和 Zotero 授权弹窗由我在本机完成，不要输出 secrets。客户端配置与凭据放在
+Vault 外，不要运行 install-skill、覆盖 Wiki adapters、建立 embedding 索引或公开 tunnel。
+
+解析我的稳定个人账号 user ID 和 collection keys，只把绑定写入本 Vault 的
+_system/zotero-collections.md。复用已有 roots；缺失或含义不明时先提出具体的最小
+初始化方案，再创建。Projects 和 Archive 由我管理，属于保护范围。
+按下文完成只读验收，不要为测试而 ingest、移动文章或重构 collections。报告哪些检查
+通过、实际改了什么、仍需我手动完成什么，并给出下一步可用的首次 ingest 提示词。
+```
+
+普通 ChatGPT 网页 developer mode 使用远程 MCP endpoint，不能直接填入下文的本地 STDIO 命令。具体能力取决于账号和环境；远程 MCP 也不会自动获得 Vault 文件访问权。本指南采用本地客户端，不通过无认证 tunnel 公开 Zotero。若确实需要独立的远程部署，请另行查看 [OpenAI developer-mode 文档](https://developers.openai.com/api/docs/guides/developer-mode)。
+
+## 1. 准备 Vault 和 agent
+
+1. 安装 [Obsidian](https://obsidian.md/download)。需要把网页抓成 Markdown 时，可选装 [Obsidian Web Clipper](https://obsidian.md/clipper)。
+2. 获取**公开 starter**，而不是其他人的在用 Vault。在[仓库页面](https://github.com/yinkalario/Knowledge-Wiki) 选择 **Code → Download ZIP**，解压到个人工作目录。已安装 Git 时也可以执行：
+
+   ```bash
+   git clone https://github.com/yinkalario/Knowledge-Wiki.git Knowledge_Wiki
+   ```
+
+   Clone 后的 `origin` 仍指向公开 starter，并不是你的个人备份仓库。推送个人内容前，先配置自己的 private repository。ZIP 用户也可以先不使用 Git，以后再初始化私有仓库。
+3. 在 Obsidian 中选择 **Open folder as vault**，打开同时包含 `_system/`、`wiki/`、`raw/`、`inbox/` 和 adapters 的整个根目录。
+4. 安装并登录本地客户端：[Codex](https://learn.chatgpt.com/docs/quickstart) 或 [Claude Code](https://code.claude.com/docs/en/overview)。把 Vault 根目录添加／打开为本地 workspace。云端 checkout 不会自动连接到你电脑上的 Zotero。
+5. 对 agent 说：“读取仓库 instructions，了解这个 Wiki，先不要修改文件。”Codex 通过 `AGENTS.md`，Claude Code 通过 `CLAUDE.md` 接入，共同遵守 `_system/`。
+
+已有 Vault 不要直接用 starter 全量覆盖，必须保留原有知识、raw、manifest 和状态。**不使用 Zotero 时，跳过第 2–8 步，直接使用第 9 步的 Vault 入口。**
+
+版本通过 Git **分支**区分：`main` 是最新维护版本，`v1` 保留引入 Zotero 前的版本，`v2` 是 V2 发布分支。新用户从 `main` 开始。分支不会自行同步，由维护者把 V2 更新发布到 `main` 和 `v2`。
+
+## 2. 准备 Zotero 和 PDF 同步
+
+安装 [Zotero，可选安装 Zotero Connector](https://www.zotero.org/download/)。本地访问使用 Zotero 7+，写入方式在第 6 步确定。Better BibTeX 可用于 citation keys，但**不是本 Wiki 或 MCP 的必要依赖**。
+
+1. 各设备在 **Zotero Settings → Sync** 登录账号。Metadata 和批注通过 Zotero 账号同步；附件选择 Zotero Storage 或 WebDAV。使用 WebDAV 时在 Zotero 填写服务商／NAS 的 URL、用户名和密码，并完成 **Verify Server**。WebDAV 同步的是附件，不是正在运行的 Zotero 数据库。参见 [Zotero 同步说明](https://www.zotero.org/support/sync)和[同步设置](https://www.zotero.org/support/preferences/sync)。
+2. 导入一份 PDF，使用 Zotero 管理的 **stored attachment**，有文献 metadata 时挂在对应条目下。实际打开一次，确认 PDF 已下载且可读。位于 Zotero storage 外的 linked file 不属于通常的 Zotero 文件同步路线。参见[导入文献](https://www.zotero.org/support/adding_items_to_zotero)。
+3. 开启 **Settings → Advanced → Miscellaneous → Allow other applications on this computer to communicate with Zotero**。macOS 在 Zotero 菜单进入 Settings，Windows 在 Edit 菜单进入。使用本地 MCP 时保持 Zotero 运行。参见[上游本地设置](https://github.com/54yyyu/zotero-mcp/blob/main/docs/getting-started.md#configure-zotero)。
+
+本地读取和计算 hash 需要 Zotero 管理／下载的那份 PDF；“PDF 留在 Zotero”不等于电脑完全没有 PDF 文件。不要把 `zotero.sqlite` 移进 NAS／Obsidian 的同步文件夹。iPad、iPhone、Android 继续用 Zotero 阅读和批注；只有需要 agent 读原文的电脑才安装 MCP。
+
+## 3. 安装 Zotero MCP
+
+本指南采用第三方 [54yyyu/zotero-mcp](https://github.com/54yyyu/zotero-mcp)，不是 OpenAI 或 Zotero 官方开发的 server。插件目录中名称相近的产品可能使用其他实现，不要无意配置两份。
+
+只选择**一种安装方式**。下文用 `uv` 管理隔离的 Python tool 环境；`pdf` extra 提供页面图片支持。Wiki 的普通工作流无需 semantic search。包依赖和 extras 见项目的[包配置](https://github.com/54yyyu/zotero-mcp/blob/main/pyproject.toml)。
+
+### macOS：Terminal
+
+如果 `uv --version` 已正常输出，跳过 uv 安装。否则使用 [uv 官方安装器](https://docs.astral.sh/uv/getting-started/installation/)：
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+关闭并重新打开 Terminal，然后执行：
+
+```bash
+uv --version
+uv python install 3.12
+uv tool install --python 3.12 "zotero-mcp-server[pdf]"
+uv tool update-shell
+```
+
+再开一个新 Terminal，检查：
+
+```bash
+zotero-mcp version
+command -v zotero-mcp
+uv tool dir --bin
+```
+
+记下真实路径，例如 `/Users/YOUR_NAME/.local/bin/zotero-mcp`。你的安装目录可能不同。
+
+### Windows：原生 PowerShell
+
+初次安装且 Zotero 运行在 Windows 时，建议使用原生 PowerShell 和原生客户端。WSL 是另一个可选运行环境，不是必需，也不代表本地集成会更简单。
+
+如果 `uv --version` 失败，执行 [uv 官方 Windows 安装命令](https://docs.astral.sh/uv/getting-started/installation/)：
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+关闭并重新打开 PowerShell，然后执行：
+
+```powershell
+uv --version
+uv python install 3.12
+uv tool install --python 3.12 "zotero-mcp-server[pdf]"
+uv tool update-shell
+```
+
+再开一个新 PowerShell 窗口，检查：
+
+```powershell
+zotero-mcp version
+(Get-Command zotero-mcp).Source
+uv tool dir --bin
+```
+
+记下真实 `.exe` 路径，例如 `C:\Users\YOUR_NAME\.local\bin\zotero-mcp.exe`。仍找不到时，检查 `uv tool dir --bin` 输出的目录；更新 PATH 后也要重启客户端。不要把 Mac 路径填进 Windows。
+
+已经通过 uv 安装、但缺 PDF 支持时，先记录 `zotero-mcp version`，再执行 `uv tool install --force "zotero-mcp-server[pdf]"` 并重连客户端；这可能同时升级包。如果原来用 pipx／pip 安装，应在原环境添加依赖，不要叠加一套安装。参见 [uv tool 环境](https://docs.astral.sh/uv/guides/tools/)。
+
+**本流程不要运行 `zotero-mcp install-skill`**，因为它可能改写 agent 入口文件。这里使用 MCP，保留 Wiki 自己的 adapters。`zotero-mcp setup` 是另一种客户端配置器，不是前置步骤，不必在手动配置完成后再运行。基础流程也不需要 `update-db`、embedding model 或 OpenAI API key。
+
+## 4. 连接 Codex
+
+GUI、配置文件、CLI **选择一种即可**。程序路径来自第 3 步的真实输出，不是包名 `zotero-mcp-server`。使用桌面 GUI 不要求终端已经能运行 `codex`。
+
+### 桌面 GUI
+
+进入 **Settings → MCP servers → Add server**。部分版本入口是 **Plugins → Add → Add MCP server**。填写：
+
+| 字段 | 填写内容 |
+|---|---|
+| Name | `zotero` |
+| Type | `STDIO` |
+| Command to launch | `zotero-mcp`／`zotero-mcp.exe` 的真实绝对路径 |
+| Arguments | 无参数；删除空参数行 |
+| Environment variable name | `ZOTERO_LOCAL`，必须全部大写 |
+| Environment variable value | `true` |
+| Environment passthrough | 基础配置留空 |
+| Working directory | 不设置 |
+
+保存、启用并重启／重连 server；工具列表未刷新时再开新聊天。该程序无参数启动时默认使用 STDIO。参见 [Codex 官方 MCP 配置](https://learn.chatgpt.com/docs/extend/mcp)。
+
+### 配置文件方式
+
+合并到当前生效的用户级 `~/.codex/config.toml`。Windows 通常在 `%USERPROFILE%\.codex\config.toml`，自定义 `CODEX_HOME` 会改变位置。保留现有配置，不要重复创建 `[mcp_servers.zotero]`。不确定时从 GUI 打开当前配置。
+
+macOS 示例：
+
+```toml
+[mcp_servers.zotero]
+command = "/Users/YOUR_NAME/.local/bin/zotero-mcp"
+
+[mcp_servers.zotero.env]
+ZOTERO_LOCAL = "true"
+```
+
+Windows 示例，TOML 使用单引号原样保留反斜杠：
+
+```toml
+[mcp_servers.zotero]
+command = 'C:\Users\YOUR_NAME\.local\bin\zotero-mcp.exe'
+
+[mcp_servers.zotero.env]
+ZOTERO_LOCAL = "true"
+```
+
+这些机器专属设置放在共享 Vault 之外。参见[配置参考](https://learn.chatgpt.com/docs/config-file/config-reference)。
+
+### 可选 CLI 方式
+
+仅当已经安装 Codex CLI，且 `codex --version` 能运行时使用：
+
+```bash
+codex mcp add zotero --env ZOTERO_LOCAL=true -- "/ABSOLUTE/PATH/TO/zotero-mcp"
+codex mcp list
+```
+
+原生 PowerShell 中命令形式相同，把路径换成真实 Windows `.exe` 路径。出现 `command not found: codex` 代表当前不能使用这条 CLI 路线，改用桌面 GUI 或配置文件即可。参见[官方 CLI 命令](https://learn.chatgpt.com/docs/developer-commands)。
+
+## 5. 连接 Claude
+
+只使用 Codex 时跳过。本机可以同时配置多个客户端，但同一时间只能有一个 agent 写 Wiki。
+
+### Claude Code
+
+安装并登录 Claude Code 后，把实际程序路径填入下面的一行命令：
+
+```bash
+claude mcp add --scope user --env ZOTERO_LOCAL=true --transport stdio zotero -- "/ABSOLUTE/PATH/TO/zotero-mcp"
+claude mcp get zotero
+```
+
+原生 Windows 填写 `.exe` 路径。在 Vault 文件夹重启 Claude Code，通过 `/mcp` 检查连接。User scope 将机器配置保存在共享仓库之外。如果已存在 `zotero`，先检查并编辑原条目，不要重复添加。参见 [Claude Code MCP 文档](https://code.claude.com/docs/en/mcp)。
+
+### Claude Desktop
+
+若当前版本提供 **Settings → Developer → Edit Config**，通过它找到生效的 `claude_desktop_config.json`。常见位置是 macOS 的 `~/Library/Application Support/Claude/` 和 Windows 的 `%APPDATA%\Claude\`，不同构建可能有区别。合并下面的条目，保留其他 `mcpServers`，完全退出并重新打开 Claude Desktop：
+
+```json
+{
+  "mcpServers": {
+    "zotero": {
+      "command": "/Users/YOUR_NAME/.local/bin/zotero-mcp",
+      "env": { "ZOTERO_LOCAL": "true" }
+    }
+  }
+}
+```
+
+Windows 替换 `command`，注意 **JSON 反斜杠需要写两次**，例如 `"C:\\Users\\YOUR_NAME\\.local\\bin\\zotero-mcp.exe"`。参见[上游 Claude 配置步骤](https://github.com/54yyyu/zotero-mcp/blob/main/docs/getting-started.md#integrating-with-claude-desktop-and-claude-code)。
+
+Claude Desktop 接通 Zotero server 后获得文献工具；维护 Wiki 还需要另外明确授权 Vault 文件访问并读取协议。没有这项能力时，使用 Claude Code 执行 Wiki 写入。
+
+## 6. 开启分类写入权限
+
+本地可读不代表可以自动分类。Wiki 需要增量修改 collection 成员关系，并在合理情况下创建分类；普通 ingest 不需要顺便重写所有文献 metadata。
+
+### Zotero 10+：本地授权
+
+保持 Zotero 打开，运行：
+
+```bash
+zotero-mcp authorize-local
+```
+
+由你本人处理 Zotero 弹窗；需要持久授权时选择 **Always Allow**。工具把本地授权保存在 Vault 之外的用户配置中。重启／重连 MCP 后检查：
+
+```bash
+zotero-mcp authorize-local --status
+```
+
+也可以让已连接的 agent 检查 `zotero_write_capabilities`，必要时调用 `zotero_authorize_local_writes`。能力检查通过不等于已完成真实写入，首次 ingest 的回读会验证实际效果。参见[本地写入授权](https://github.com/54yyyu/zotero-mcp/blob/main/docs/configuration.md#local-write-support)。
+
+### 较旧 Zotero：本地读取＋Web API 写入
+
+1. 登录 [Zotero API keys 页面](https://www.zotero.org/settings/keys)，为个人库创建具备所需 library read/write 权限的 key，记下页面显示的数字 **user ID**。
+2. 保留 `ZOTERO_LOCAL=true`，在所选 MCP 客户端的私有环境变量配置中添加 `ZOTERO_API_KEY`（该 key）、`ZOTERO_LIBRARY_ID`（该数字 user ID）、`ZOTERO_LIBRARY_TYPE=user`。Secret 在本机输入，不要放进聊天、README 或 Vault 文件。
+3. 重连 MCP，让 agent 检查写入能力。通过 Web API 写入后，等待 Zotero 同步完成，再核对桌面状态。
+
+NAS 密码、Zotero 账号密码、Web API key 和本地写入授权是不同的东西。本地读取不需要 Web API key；Zotero 10 完成本地授权后通常也不需要它来写入。没有写入权限时仍可编译知识，但分类／Inbox 收尾必须保留为 pending。参见[连接模式](https://github.com/54yyyu/zotero-mcp/blob/main/docs/configuration.md#connection-modes)。
+
+## 7. 绑定个人文献库和 collections
+
+客户端连接与 Wiki 绑定是两件事。修改**个人副本**里的 [`_system/zotero-collections.md`](_system/zotero-collections.md)，公开 starter 故意保留为 unconfigured。
+
+建议的根分类：
+
+```text
+00 Inbox
+10 Topics         研究什么
+20 Methods        核心方法怎么做
+30 Projects       由你管理
+90 Archive        由你管理
+```
+
+已有分类能承担这些角色时直接复用。Roots 缺失时，确认最小初始化方案，或在 Zotero 手动创建；不必导入别人整套 taxonomy。例如 `10 Topics/Music & Musical Audio` 与 `20 Methods/Generative Modeling` 是两个独立维度。Topics／Methods 使用稳定、描述性的名称，避免每篇论文一个类别或随意加入年份前缀。
+
+对 agent 说：
+
+```text
+请配置本 Vault 的 Zotero 绑定。读取个人库的实际 collection tree，确认稳定账号
+user ID 以及 Inbox、Topics、Methods 的 keys。把它们、规则版本／日期、受管理分类的
+name/key/parent tree 和简明边界写入 _system/zotero-collections.md，并标记
+Projects／Archive 受保护。复用已有 roots；缺失或含义不明确时先提方案再创建。
+本次只做设置，不 ingest，不改变已有文章的分类关系。
+```
+
+手动设置时，在 [Zotero keys 页面](https://www.zotero.org/settings/keys) 取得账号 user ID，用已连接 MCP 的 collection listing 获取 keys／parents，再填入配置文件对应字段。本地 API 的 `0`、SQLite library number `1`、collection 名称和稳定账号 ID 不是同一个东西。不要猜 key，也不要把本机 PDF 目录写进配置。
+
+普通 ingest 可以添加合适的 Topics／Methods 归属，必要时创建含义明确、可复用的新类别。**Projects 和 Archive 受保护。** 对已有类别重命名、移动、合并、拆分或删除，需要先确认具体方案，再复核所有受影响旧文章。可以明确要求全库发现，但不因此自动授权全库重分类。
+
+## 8. 核验连接
+
+在 Zotero 保留一份已下载的已知 PDF，要求执行**只读**验收：
+
+```text
+请核验 Knowledge Wiki v2 配置，不 ingest、不修改 Zotero、不保存笔记。
+确认能读取 Vault 协议，并识别当前个人文献库。列出绑定的 collection roots，定位我指定
+的一篇论文、parent key 和精确 PDF attachment key。解析本机 PDF，计算 SHA-256，读取
+指定物理页的文本和一页图片，检查其批注。区分真实零批注与 API 错误。检查写入能力，
+但不要实际写入。逐项报告通过／失败，以及实际测试的客户端和操作系统。
+不要暴露 credentials，也不要建立索引。
+```
+
+各项应分别验收：
+
+- **客户端：** MCP 已连接且工具可调用；仅保存了配置不算成功。
+- **原文：** 实际 PDF 文件可访问，已计算 hash，指定页文本／图片可读；只有 metadata 或 abstract 不算完成 PDF ingest。
+- **批注：** 取得真实批注或确认空结果；缺失能力需保留为待处理。
+- **绑定：** 稳定库身份和 collection keys 与实时数据一致。
+- **写入：** 写入路线可用；首次真实 ingest 再测试增量增删与回读。
+- **Wiki 访问：** agent 具备 Vault 本机文件读写能力；只读验收不必创建测试文件。
+
+首次 Source note 出现后，在**每台桌面设备**从 Obsidian 点击一个页码链接，确认打开正确 PDF 和页码。这项检查验证系统链接处理程序，与 MCP 读取和文件 hash 核验分别进行。
+
+## 9. 第一次 ingest
+
+### Zotero 入口
+
+把**选定的一篇论文**放进已配置的 `00 Inbox`，确认 PDF 在本机可打开，然后说：
+
+```text
+请对 Zotero 00 Inbox 中的 <论文标题或 item key> 做 Standard Ingest，PDF 留在 Zotero。
+先检索已有知识，再决定更新或创建。记录精确附件身份、SHA-256、论文版本、物理页码链接
+和实际阅读范围，只快照编译中实际使用的批注／notes。仅分类 Topics／Methods，保留
+Projects／Archive。先添加并核验目标归属，只有编译、批注处理、记账和 lint 成功后，
+才移除 Inbox 归属。报告修改文件、分类差异和任何未完成步骤。
+```
+
+打开 `wiki/Home.md` 和生成的知识页。有持续价值的论文通常会获得 Source note；精确重复或无新材料的来源不必创建空页面。小试点通过后，日常说“请处理 Zotero Inbox”，即可处理待入库论文。
+
+### Vault 入口：可以完全不使用 Zotero
+
+通过 Obsidian Web Clipper 把网页保存到 `inbox/`，或把 PDF／Markdown／文本放进去，再说：“请对 Vault inbox 的新资料做 Standard Ingest。”Agent 保留 canonical raw、核对 hash、更新已有知识，并在协议条件全部通过后清理投递副本。从 Vault 投递的 PDF 仍支持留在 Vault，不会被静默搬到 Zotero。
+
+### 提问与失败续接
+
+可以问：“根据 Wiki 解释这篇论文的公式 3，并回到引用页核验。”Query 默认只读，根据 raw 路径或精确外部来源引用找到原文并核对 hash。Zotero 不可用时，必须区分已有 compiled coverage 与无法重新核验的细节。
+
+PDF hash 在 Vault 与 Zotero 来源间统一查重。已完成 ingest 的重复文件复用知识；待完成分类或新使用批注仍可处理。未完成 ingest 续接剩余工作，分类变化不触发 PDF 重新 ingest。分类成功和 Inbox 移除分别记账，失败重试不必全部重来。
+
+实际使用的批注快照位于 `raw/other/`，包含来源身份、PDF hash、annotation／note keys、定位和内容。Payload hash 不含捕获时间，内容变化时创建新快照。这些快照遵循 Vault raw 的文件同步／备份，**不进入 Git**，也不能恢复丢失的 PDF。详见 [SCHEMA 第 11 节](_system/SCHEMA.md#11-external-evidence-and-backward-compatible-manifest-v2) 和 [WORKFLOW 第 15–17 节](_system/WORKFLOW.md#15-zotero-connection-discovery-and-ingest)。
+
+## 故障排查
+
+| 现象 | 下一步检查 |
+|---|---|
+| `codex: command not found` | 改用桌面 GUI／配置文件；GUI 配置不要求另外安装 CLI。 |
+| 找不到 `zotero-mcp` | 重开终端，查看 `uv tool dir --bin`，客户端填写真实绝对路径。 |
+| 保存了 MCP 但连不上 | 确认 Zotero 运行、允许本地通信、`ZOTERO_LOCAL=true` 全大写；删除空参数行，重连并检查客户端错误。 |
+| 搜索成功但 PDF 读取失败 | 在 Zotero 打开／下载精确附件。只有 WebDAV 上的远程文件或 metadata 不等于本机有 PDF。 |
+| 缺 `fitz`／PyMuPDF，图片读取失败 | 给**同一 tool 环境**补 `pdf` extra，再重连；也可用已核验的本地 PDF reader，报告实际采用的路线。 |
+| 可读但分类失败 | 检查本地授权或 hybrid key 权限、write capabilities；不要标记 Inbox 已完成。 |
+| 找不到文章、库错误或 key 不存在 | 核对 active personal library、同步状态和实际 root keys。另一台电脑未同步不是重新 ingest 的理由。 |
+| Obsidian 链接打不开或内容不对 | 检查 Zotero 已安装、账号／附件对应、PDF 已下载及 `zotero://` 关联，再核对当前文件 hash。 |
+| PDF hash 改变 | 登记新快照并调查差异，不静默替换旧引用；必要时从 Zotero 备份恢复旧文件。 |
+| Windows Zotero＋WSL agent 失败 | 确认 MCP 究竟在哪个系统运行、怎样连接 Zotero 和解析附件路径。本指南优先原生 Windows，不假设 localhost／路径跨环境通用。 |
+| 同名 server 出现两次 | 每客户端保留一份明确配置，安装前检查同名 plugin 的实际实现。 |
+| 设置时不断建议 embeddings | 基础检索使用 index、summary 和定向搜索，不用 semantic indexing 修复连接问题。 |
+
+更多实现相关问题见 [Zotero MCP troubleshooting](https://github.com/54yyyu/zotero-mcp/blob/main/docs/troubleshooting.md)。不要把未脱敏的客户端配置或授权文件贴到公开 issue。
 
 ## 仓库与 Vault 目录结构
 
-应把整个仓库根目录作为 Obsidian Vault 打开，而不是只打开 `wiki/`。各个顶层目录承担不同职责：
-
 ```text
 Knowledge_Wiki/
-├── wiki/                 编译后、可供人直接阅读的知识
-│   ├── Home.md           起始页和导航入口
-│   ├── concepts/         概念、机制和方法
-│   ├── entities/         模型、工具、数据集、人物和组织
-│   ├── sources/          针对单个来源的可复用笔记
-│   ├── questions/        开放问题和 hypotheses
-│   └── syntheses/        跨来源比较和结论
-├── _system/              Agent protocol 和 durable bookkeeping
-│   ├── SCHEMA.md         知识模型与页面规则
-│   ├── WORKFLOW.md       Ingest、Query、Promote 和 Lint 流程
-│   ├── DECISIONS.md      已接受的架构决定及其理由
-│   ├── templates/        五种知识页面的模板
-│   └── index、manifest、STATE 和 log 文件
-├── raw/                  为核验而保留的 canonical evidence
-│   ├── papers/           原始论文和报告
-│   ├── web/              抓取的网页和 snapshots
-│   ├── conversations/    Promote 后的 conversation evidence
-│   ├── assets/           归属于 raw source 的附件
-│   └── other/            其他 canonical evidence
-├── inbox/                等待 Ingest 的资料投递区
-│   └── attachments/      随 inbox source 投递的附件
-├── assets/               Wiki 自身使用的图片和其他文件
-├── .obsidian/            这个 Vault 共用的 Obsidian 配置
-├── AGENTS.md             Codex 入口文件
-├── CLAUDE.md             Claude Code 入口文件
-├── README*.md            用户文档
-└── .git/                 指定提交机上的本地 Git 历史
+├── wiki/                 编译后的知识
+│   ├── Home.md           人类导航首页
+│   ├── sources/          单一来源的可复用笔记
+│   ├── concepts/         跨来源累积的概念解释
+│   ├── entities/         模型、数据集、工具、人物、组织
+│   ├── questions/        持久研究问题
+│   └── syntheses/        跨来源比较与论证
+├── _system/              Vendor-neutral 协议与可接管状态
+│   ├── SCHEMA.md / WORKFLOW.md / DECISIONS.md
+│   ├── zotero-collections.md   个人绑定；starter 未预配置
+│   ├── templates/        五种页面模板
+│   └── index.md / manifest.json / STATE.md / log.md
+├── raw/                  Vault 证据；文件同步与备份，不进入 Git
+│   ├── papers/           从 Vault 投递的 PDF
+│   ├── web/              网页／Markdown captures
+│   ├── conversations/    明确要求保留的对话证据
+│   ├── other/            其他来源和实际使用的 Zotero note 快照
+│   └── assets/           来源附属图片
+├── inbox/                Vault 投递区，含 attachments/
+├── assets/               Wiki 自身的品牌／素材
+├── .obsidian/            共用浏览设置
+├── AGENTS.md / CLAUDE.md  客户端薄入口
+└── README*.md            人类设置与使用指南
 ```
 
-这种分离是有意设计的：`inbox/` 接收资料，`raw/` 保存证据，`wiki/` 保存从证据编译出的知识；`_system/` 让没有旧聊天 context 的新 agent 也能正确接管。`raw/` 和 `inbox/` 中的实际文件不进入 Git，但仍留在 Vault 中由 file-sync service 同步；Git 会保留目录标记，使新 clone 仍具有预期结构。`.git/` 只属于指定提交机本地，不应由文件同步服务同步。
+Zotero 数据库／PDF storage 及客户端凭据留在此目录之外。`_system/BOOTSTRAP.md` 是历史设计输入；当前权威次序为 SCHEMA → WORKFLOW → DECISIONS。维护时读取 STATE，通过 compact index 筛选知识页。README 负责说明怎样开始使用，不取代权威协议。
 
-## 五分钟 Quick Start
-
-### 1. 安装 Obsidian 和 Web Clipper
-
-- 为当前操作系统安装 [Obsidian](https://obsidian.md/download)。
-- 在 Chromium-based 浏览器、Firefox、Safari 或 Edge 中安装官方 [Obsidian Web Clipper](https://obsidian.md/clipper) 扩展。
-
-Web Clipper 是把文章和选中段落以 Markdown 形式送进 Wiki 的最简单方式。建议用它 capture 网页，但它不是 runtime dependency：PDF、本地文件、粘贴文本和直接 URL 同样可以使用。
-
-### 2. 把整个仓库作为一个 Vault 打开
-
-Clone、下载或找到 `Knowledge_Wiki` 文件夹。在 Obsidian 中选择 **Open folder as vault**，然后选择仓库根目录，也就是同时包含 `AGENTS.md`、`_system/`、`wiki/`、`raw/` 和 `inbox/` 的那个文件夹。
-
-不要只把 `wiki/` 打开为 Vault。Agent 需要同时看到 protocol、evidence、inbox 和 bookkeeping 目录。如果准备 ingest 私人或受版权保护的资料，请使用 private personal copy，而不是公开 fork。
-
-### 3. 连接一个 file-based agent
-
-以 Vault 根目录为 working directory，启动 Codex、Claude Code 或其他 file-based coding agent。
-
-- Codex 通过 `AGENTS.md` 进入系统；
-- Claude Code 通过 `CLAUDE.md` 进入系统；
-- 两者都遵循相同的 `_system/SCHEMA.md` 和 `_system/WORKFLOW.md`，不需要之前的聊天 context。
-
-第一次可以先做只读检查：
-
-```text
-请读取仓库指引，了解这个 Knowledge Wiki，准备好后告诉我。先不要修改文件。
-```
-
-不要让两个 agent 同时写入 Vault。没有 `.git/` 的设备可以 ingest 和 lint，但应由指定提交机稍后审阅并提交已同步的变更。
-
-### 4. 选择来源入口
-
-选择任意一种方式：
-
-- **网页文章：** 打开 Web Clipper，选择这个 Vault，将目标 Folder 设为 `inbox/`，检查抓取的文章，然后点击 **Add to Obsidian**。
-- **PDF、Markdown 或文本文件：** 通过 Finder、File Explorer 或 file-sync service 把文件复制到 `inbox/`。
-- **Zotero PDF：** 保留在 Zotero `00 Inbox`，使用下方 Zotero 工作流。
-- **直接 URL 或粘贴文本：** 直接提供给 agent，并明确要求 Ingest。
-
-`inbox/` 是资料投递区。不要手动把尚未处理的 source 放进 `wiki/`；agent 会在正确位置创建 canonical raw evidence 和 compiled pages。
-
-### 5. 执行第一次 Ingest
-
-普通资料默认使用 Standard Ingest：
-
-```text
-请用 Standard Ingest 处理 inbox 里的新资料。
-```
-
-Agent 会通过 manifest 和 hash 识别未处理文件，保留 canonical raw evidence，检查重复，搜索已有知识，先更新后创建，验证 links 和 provenance，并报告每个 created/updated file。如果 inbox 里有多个新来源，会先列出再依次处理。只有所有 cleanup 条件都通过后才会删除 inbox 投递副本；否则会保留并说明原因。
-
-### 6. 打开结果并开始提问
-
-从 `wiki/Home.md` 开始，再打开新 Source page 以及它更新的 Concept 或 Entity page。然后试一次只读 Query：
-
-```text
-根据我的 Wiki，Flow Matching 和 Diffusion 的核心区别是什么？
-```
-
-Query 默认不会修改 Vault。如果答案中有值得保留的 durable conclusion，agent 会提出 Promote 建议。
-
-## v2 的 Zotero 工作流（可选）
-
-保留两种入口：PDF／Markdown／文本继续放进 Vault `inbox/`；也可以让 PDF 一直保存在 Zotero，再要求 Zotero ingest。Zotero 管理自己的 PDF 附件，Wiki 管理 compiled notes 和可跨设备使用的来源记录。Web Clipper 的 Markdown 与其他本地 raw 仍在 Vault。五种页面类型及 Standard／Deep／Exhaustive 阅读要求不变。
-
-### 连接与初始化
-
-Mac、Windows 各自配置本机 Zotero adapter。首个接入实现是 [54yyyu/zotero-mcp](https://github.com/54yyyu/zotero-mcp)，采用 `ZOTERO_LOCAL=true`；PDF 扩展支持页面图片。保持 Zotero 打开、允许本地通信，并确保所选附件已下载。电脑上的这份文件属于 Zotero 管理，不是另存到 Vault 的 PDF。移动设备继续用 Zotero 阅读和批注。WebDAV 同步附件、Zotero 账号同步 metadata／批注，都不会替其他电脑安装 MCP。
-
-按照各客户端当前说明注册本地程序，不要顺手运行会修改 Vault `AGENTS.md`／`CLAUDE.md` 的 skill 安装器。Query 只需要读取权限；自动分类另需 Zotero 写入授权。凭据和机器绝对路径不写入 Vault。首次使用前，在 [`_system/zotero-collections.md`](_system/zotero-collections.md) 绑定稳定账号 ID 与实际 collection keys。公开 starter 故意不预填个人绑定；不使用 Zotero 仍可正常运行。
-
-### 日常使用
-
-```text
-请用 Standard Ingest 处理 Zotero 00 Inbox 中的新论文。PDF 留在 Zotero。只分类 Topics 和 Methods，必要时创建含义明确、可复用的新类别；保留 Projects 和 Archive。报告原文链接、hash、实际阅读范围、批注快照、分类变更和未完成事项。
-```
-
-也支持指定论文、collection 或全库发现；全库发现不等于自动全库重分类。PDF hash 在 Zotero 和 Vault 来源之间统一查重。重复 ingest 复用已有知识，但可以补做分类或保存新使用的批注；标题或 DOI 相同不等于文件相同。全库检查先分页读取精简 metadata，再选取需要读原文的文章。
-
-提问时可指定论文、公式、章节或页码。Agent 解析具体附件、校验 hash，然后只读必要上下文；普通 Query 不修改 Vault 或 Zotero。Zotero 不可用时，必须区分此前已编译的内容与尚未重新核验的原文细节。
-
-### 原文链接、快照和版本
-
-Source note 保留附件链接、稳定来源引用、PDF 物理页码、SHA-256 和实际文本／视觉阅读范围。`sources` 继续保存 Vault raw 路径，可选 `source_refs` 引用外部 manifest 记录。点击 Zotero 链接会打开当前附件，但只有 hash 检查才能确认与历史文件快照一致。曾引用的旧版本应作为不同附件保留；Zotero metadata 修订编号不是论文版本。旧附件被覆盖或丢失时，Wiki 能发现问题，但恢复需要原文件或备份。
-
-只把实际用于编译的批注或子 note 保存为 `raw/other/` 下不可覆盖的 Markdown，必要图片保存在 `raw/assets/`。快照区分论文原文、用户评论和 agent 推断；所选内容的查重 hash 不包含捕获时间。快照不等于完整 PDF 备份。Obsidian graph 仍通过 Source 与 Concept／Entity 等知识页的内部链接形成，不需要为了 graph 复制 PDF 或新造页面。
-
-### 分类与失败恢复
-
-Topics 表达研究问题，Methods 表达核心方法。Projects 完全由用户管理，agent 不增删其成员关系或修改其结构；Archive 同样受保护。优先复用既有分类、保留手工归属，允许合理的多重分类。重命名／移动／合并／拆分／删除既有类别，需要先确认具体方案，并复核所有受影响旧文章和子分类。手工结构变更在下次用户触发的 ingest／维护时检查，没有后台 watcher。
-
-编译和分类分别记录状态。先加入并核验目标分类，再移除 Inbox 归属。只有 ingest、批注处理、分类、记账和 lint 均完成，才移除 Inbox；某一步失败就保留待处理状态，重试只补未完成步骤。Zotero Inbox 移除不删除文件，不要求当前设备有 Git；删除 Vault inbox 投递副本仍须满足原有严格条件。非 Git 设备报告待提交状态。分类变化不改变 PDF hash，也不要求重新编译笔记。
-
-Git 只能恢复 Wiki 文本，不能自动撤销 Zotero 分类。操作记录修改前后差异，恢复前核对当前状态并保留其间的人为修改。Vault raw 和 Zotero 原文件都需要独立备份。精确执行条件见 WORKFLOW 第 15–17 节。
-
-### 升级与验收
-
-Manifest v2 保留 v1 raw 记录，新增 `external_sources` 和 `zotero_items`。旧笔记无需批量重写，缺失 `source_refs` 视为空列表。同一篇文章后来进入 Zotero 时，保留旧 raw PDF，建立相同内容的关联，不自动搬迁或删除证据。不伪造历史阅读范围。
-
-本地 hash／链接／manifest 一致性检查与 Zotero 在线可读性分开验收。先做一个小规模真实 Inbox 试点，再扩大使用；明确报告缺失依赖和未实测设备。公开 starter 只含通用协议及空状态。协议可跨 agent 使用，MCP 是可替换访问层，不是持久记忆。
+这里保存持久研究知识，不保存任务、提醒、完整聊天档案或未经筛选的文件堆。持续维护的解释和可追溯证据才是 Wiki 的价值。
 
 ## 主要操作方式
 
@@ -199,7 +442,7 @@ Manifest v2 保留 v1 raw 记录，新增 `external_sources` 和 `zotero_items`�
 
 ### Deep Ingest
 
-适合 foundational paper、准备认真引用的工作，或需要深入理解方法、证据和限制的来源。它会先建立论文地图，覆盖核心论证与证据链，再选择性保存以后值得理解、比较、引用或复用的细节。未保存的低频细节通过 locator 在 Query 时按需回到 raw。Deep 会消耗更多 token，必须显式要求，但不默认逐页穷尽附录。
+适合 foundational paper、准备认真引用的工作，或需要深入理解方法、证据和限制的来源。它会先建立论文地图，覆盖核心论证与证据链，再选择性保存以后值得理解、比较、引用或复用的细节。未保存的低频细节通过 locator 在 Query 时按需回到原文。Deep 会消耗更多 token，必须显式要求，但不默认逐页穷尽附录。
 
 ```text
 请对 inbox 里的新论文做 Deep Ingest。
@@ -222,7 +465,7 @@ Manifest v2 保留 v1 raw 记录，新增 `external_sources` 和 `zotero_items`�
 | 先建立可靠、可复用的研究笔记 | Standard Ingest | 结构化 Source page，并按需更新相关知识页 |
 | foundational paper 或需要深入研究理解 | Deep Ingest | 覆盖核心论证和证据链，选择性编译 durable details |
 | 复现、审稿或逐节完整技术分析 | Exhaustive Ingest | 覆盖所有 material 方法、公式、实验、附录、限制与复现信息 |
-| 临时追问某个公式、图表或实验 | Query | 只打开对应 raw 页面和必要上下文，默认不写回 |
+| 临时追问某个公式、图表或实验 | Query | 只打开对应原文页面和必要上下文，默认不写回 |
 
 公式没有“必须保留 1–3 个”之类的配额。没有关键公式的 empirical paper 不应硬塞公式；高度数学化的论文则可能需要保留很多公式。Standard 和 Deep 判断的是：缺少它是否会妨碍理解核心贡献、解释结果、比较方法或判断复现要求；Exhaustive 则覆盖所有 material equations。保留时应同时解释 symbols、assumptions、作用、必要推导逻辑和原文 locator。
 
@@ -233,7 +476,7 @@ Deep Ingest 的“深入”指核心理解和证据链完整，不是把所有�
 当一次 query 或讨论产生 durable knowledge 时，可以将结论编译回 Wiki：
 
 ```text
-这个答案值得保存。请保留 raw provenance，并优先更新已有页面，不要保存完整聊天。
+这个答案值得保存。请保留原文 provenance，并优先更新已有页面，不要保存完整聊天。
 ```
 
 ### Research Mode
@@ -310,7 +553,7 @@ Zotero: verify Topics/Methods filing, then remove Inbox membership
 - 使用 Backlinks 和 Outgoing Links 理解关系；
 - 经过几次 ingest 后，使用 global Graph 查看 topic clusters、bridge pages 和孤立区域。Graph View 已排除 `_system`、`raw` 和 `inbox`；
 - 只在想看某个已连接页面的直接邻域时使用 Local Graph；新 Wiki 中 Local Graph 很稀疏是正常的；
-- 新附件默认进入 `inbox/attachments/`，在 ingest 后再进入正式 raw layer。
+- 通过 Obsidian 添加的附件默认进入 `inbox/attachments/`；Zotero 附件继续留在 Zotero。
 
 `_system/index.md` 是 agent 的 compact catalog，不是语义知识页，也不应被当作证据。
 
@@ -375,7 +618,7 @@ Source page 不是每次 ingest 的必然产物。如果来源只强化已有 Co
 
 ### 什么是 No material？
 
-来源已保存到 raw，但没有给当前 Wiki 增加值得写入的新知识。Manifest 和 log 会记录这一结果，不创建空洞页面。
+来源已保存到 Vault raw 或登记为外部附件，但没有给当前 Wiki 增加值得写入的新知识。Manifest 和 log 会记录这一结果，不创建空洞页面。
 
 ### Ingest 后需要手动删除 inbox 文件吗？
 
