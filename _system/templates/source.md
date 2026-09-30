@@ -5,6 +5,7 @@ summary: ""
 aliases: []
 tags: []
 sources: []
+source_refs: []
 status: active
 needs_review: false
 created: "{{date}}"
@@ -28,6 +29,18 @@ figure, or table quota; compile details according to material value and mode.
 - Canonical URL:
 - DOI / arXiv ID:
 - Version / status:
+- Original evidence / exact external source reference:
+- PDF attachment link / content hash:
+
+## Reading coverage
+
+- Mode / date:
+- Text pages / sections:
+- Visually inspected pages:
+- Deferred scope / limitations:
+- Used annotation snapshots:
+
+<!-- Use physical PDF page numbers; do not infer past coverage. Omit Zotero-only fields for local sources. Each claim footnote must resolve to the correct raw or external file snapshot. -->
 
 ## What to remember
 

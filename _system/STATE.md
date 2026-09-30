@@ -6,7 +6,7 @@ Last updated: not yet used
 
 ## Current focus
 
-- No sources have been ingested. This is a clean starter Vault.
+- No sources have been ingested. This is a clean v2 starter Vault; Zotero is optional and not configured.
 
 ## Pending human review
 
@@ -18,4 +18,4 @@ Last updated: not yet used
 
 ## Next recommended action
 
-Follow the Quick Start in `README.md`: add one real source to `inbox/` and request Standard Ingest.
+Follow the Quick Start in `README.md`: add one real source to `inbox/` and request Standard Ingest. Alternatively configure the Zotero personal library and collection keys before requesting Zotero Inbox ingest.

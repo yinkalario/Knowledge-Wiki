@@ -16,7 +16,7 @@ Raw evidence preserves what a source said, while compiled knowledge should remai
 
 **Consequences**
 
-- Material claims remain traceable to raw.
+- Material claims remain traceable to Vault raw or a hash-verified registered Zotero attachment.
 - Source pages compile understanding but do not replace raw evidence.
 - Agent memory, cache, session history, and embeddings are disposable.
 
@@ -44,7 +44,7 @@ Any capable agent should be able to maintain the Vault from files alone, without
 
 **Decision**
 
-- Keep the v1 page model to Source, Concept, Entity, Question, and Synthesis.
+- Keep the five-type page model to Source, Concept, Entity, Question, and Synthesis.
 - Treat `wiki/Home.md` as a human dashboard and `_system/index.md` as the compact machine candidate catalog.
 - Use portable Markdown, YAML, raw paths, and wikilinks as durable representation.
 - Treat Obsidian as a viewer rather than an authoritative runtime.
@@ -56,7 +56,7 @@ A small page model and plain files are easier to search, audit, migrate, and mai
 **Consequences**
 
 - Project, Decision, Comparison, numeric confidence, typed relationships, claim ledgers, and complex taxonomy remain deferred.
-- Dataview, vector databases, graph databases, embeddings, PPR, BM25, background watchers, and multi-writer coordination are not required by v1.
+- Dataview, vector databases, graph databases, embeddings, PPR, BM25, background watchers, and multi-writer coordination are not required by v2.
 - New page types or infrastructure require a demonstrated need and explicit approval.
 
 ## 4. Three ingest modes with shared epistemic standards
@@ -93,7 +93,7 @@ Most questions do not justify durable writes. Separating retrieval from compilat
 
 **Consequences**
 
-- Query does not modify Wiki, index, manifest, STATE, or log.
+- Query does not modify Wiki, index, manifest, STATE, log, or Zotero, and does not preserve snapshots without Promotion.
 - Promoted claims return to raw evidence, preserve provenance, and mark inference.
 - Research Mode never becomes a hidden persistent preference and retains high-risk confirmation boundaries.
 
@@ -101,10 +101,10 @@ Most questions do not justify durable writes. Separating retrieval from compilat
 
 **Decision**
 
-- Use immutable dated raw snapshots as canonical evidence.
-- Use a simple `manifest.json` keyed by Vault-relative raw path, with SHA-256, source identifiers, disposition, and affected pages.
+- Use immutable dated raw snapshots for Vault-owned evidence and registered Zotero PDF attachments for external evidence. Zotero PDFs are not copied into raw by default.
+- Keep v1 raw-path records in manifest v2, add immutable external snapshot references and separate resumable item-classification records. Optional `source_refs` extends existing page metadata without rewriting legacy pages.
 - Use exact hashes as the duplicate gate.
-- Defer event ledgers, source/version IDs, and more complex databases until the simple manifest causes a real operational problem.
+- External snapshot identity includes stable account identity, attachment key and SHA-256. Keep coverage, used annotation snapshots and classification independent; defer additional databases and global event ledgers.
 
 **Rationale**
 
@@ -113,9 +113,9 @@ The system needs reproducible provenance and duplicate detection without introdu
 **Consequences**
 
 - Identical hashes do not produce duplicate Wiki knowledge.
-- Changed content at the same URL or DOI becomes a new retained snapshot.
-- A hash verifies integrity but cannot recover missing raw evidence.
-- Load-bearing numbers, quotations, current claims, and experimental results cite raw near the claim.
+- Changed bytes at the same URL, DOI or attachment become a new snapshot; Zotero revision counters and collection changes are not paper versions.
+- A hash verifies integrity but cannot recover missing evidence. Zotero originals need independent backup; source links open current attachments and do not validate bytes.
+- Load-bearing numbers, quotations, current claims, and experimental results cite exact original evidence near the claim. Annotation snapshots preserve used content and never replace a PDF.
 
 ## 7. Single writer, separated synchronization, and recoverable evidence
 
@@ -158,3 +158,24 @@ Each file should answer one question without duplicating the same history. Curre
 - Merge, rename, delete, major epistemic conflict, schema change, and more than 10 planned page changes require user confirmation, except verified inbox cleanup.
 - Archive structures, protocol splits, index or manifest sharding, adapter read-order changes, and durable path changes require a concrete proposal and prior approval.
 - No archive or lifecycle infrastructure is introduced before a real need appears.
+
+## 9. Optional Zotero workflow and bounded collection writes
+
+**Decision**
+
+- Preserve the complete Vault-only ingest route; add local Zotero as an optional source provider through replaceable MCP/CLI/API capabilities.
+- Default Zotero ingest to the configured Inbox, with explicit collection/item/full-library discovery supported. Whole-library discovery is not mass reclassification.
+- Automatically file only within Topics and Methods, and create clear reusable categories within those axes when necessary. Projects are entirely user-managed; Archive is protected.
+- Existing category restructuring requires a concrete approved plan and review of all affected old items, including descendants and broader candidate branches for splits.
+- Compile, inspect annotations, classify, and remove Inbox membership as separately recoverable stages. Duplicate PDF detection skips redundant compilation, not unfinished filing or used annotation changes.
+
+**Rationale**
+
+One PDF owner avoids duplication while stable identity/hash/locators preserve provenance. Independent stages make partial external failures recoverable without claiming cross-system transactions. Human project intent cannot be inferred safely from category names.
+
+**Consequences**
+
+- Local file paths and secrets stay outside durable Vault state; each desktop resolves its synchronized Zotero attachments.
+- Keep the compact per-Vault collection rules separate from shared protocol. The public starter contains no personal account, keys, taxonomy or migration history.
+- Incremental membership changes preserve manual relationships. Query is read-only; ordinary ingest never deletes/reparents items or edits annotations.
+- User-triggered review detects managed-tree changes; no background agent, vector store or automatic full-library rewrite is introduced.

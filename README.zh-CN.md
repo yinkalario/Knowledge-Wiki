@@ -10,7 +10,7 @@
 一个基于 Andrej Karpathy LLM Wiki 理念的个人长期研究知识库：你选择资料、提出问题和做最终判断；可替换的 LLM agent 负责把 raw evidence 持续编译成 coherent、可检索、可追溯的 Wiki。
 
 > [!IMPORTANT]
-> **当前状态：** 这是一个干净、尚未使用的 starter template。v1 结构、真实来源 workflow 和 Codex/Claude Code fresh handoff 已在独立的私有 pilot 中验证；本仓库不包含 pilot 来源、compiled knowledge、个人 STATE 或操作历史。
+> **当前状态：** v2 支持可选 Zotero ingest、精确附件溯源和 Topics／Methods 分类，同时兼容 Vault-only 工作流。使用 Zotero 前先配置个人绑定；具体核验状态见 STATE。
 
 ## 为什么使用 Knowledge Wiki？
 
@@ -21,12 +21,12 @@ Karpathy-style LLM Wiki 的核心想法是改变这个循环：让 LLM 把新资
 ### 这个项目主要增加了什么
 
 - **知识会累积，而不是只堆积摘要。** 新论文不会默认变成又一篇孤立总结。Agent 会先搜索 Wiki 已有内容，更新现有 Concept 和 Entity，记录值得长期追踪的 Question，只在真正形成跨来源比较或结论时创建 Synthesis。
-- **重要结论都可以回去核对。** 原始 PDF、网页快照和其他证据保留在 `raw/`。关键数字、引语、实验结果和时效性事实可以定位到具体 page、section、figure、table 或 snapshot。
+- **重要结论都可以回去核对。** 从 Vault 导入的 PDF、网页快照和其他证据保留在 `raw/`；从 Zotero 导入的 PDF 留在 Zotero，并登记可核验的来源关联。关键数字、引语、实验结果和时效性事实可以定位到具体 page、section、figure、table 或 snapshot。
 - **你可以决定读多深。** Standard Ingest 高效处理日常资料；Deep Ingest 深入跟踪核心论证和证据链；Exhaustive Ingest 用于复现、审稿或逐节完整技术分析。
 - **提问不会自动污染 Wiki。** Query 默认只读。当讨论产生值得保留的内容时，Promote 只会编译 durable conclusion，而不是把整段 conversation 存起来。
 - **Agent 可以随时替换。** Codex、Claude Code 或其他 file-based agent 都可以仅依靠 Vault 接管。真正持久的 memory 是普通 Markdown、raw evidence 和少量 bookkeeping 文件，而不是某个产品的聊天历史或隐藏 memory。
 - **跨设备工作仍然可审计。** Hash 防止重复 ingest，manifest 记录每个来源影响了什么，Git 审阅文本历史，raw evidence 则可以单独同步和备份。
-- **系统始终可以被人看懂。** v1 只使用五种页面、Obsidian links、Search、Graph 和普通文件。只有真实 retrieval problem 出现后，才增加 database、embeddings 或复杂 plugins。
+- **系统始终可以被人看懂。** v2 仍只使用五种页面、Obsidian links、Search、Graph 和普通文件。只有真实 retrieval problem 出现后，才增加 database、embeddings 或复杂 plugins。
 
 实际使用时，你可以直接问：“我的 Wiki 现在对这个主题的理解是什么，为什么，哪些来源存在分歧？”回答来自一个持续维护的知识体系，而不是一堆互不相干的摘要。
 
@@ -116,12 +116,13 @@ Clone、下载或找到 `Knowledge_Wiki` 文件夹。在 Obsidian 中选择 **Op
 
 不要让两个 agent 同时写入 Vault。没有 `.git/` 的设备可以 ingest 和 lint，但应由指定提交机稍后审阅并提交已同步的变更。
 
-### 4. 把第一份来源放进 `inbox/`
+### 4. 选择来源入口
 
 选择任意一种方式：
 
 - **网页文章：** 打开 Web Clipper，选择这个 Vault，将目标 Folder 设为 `inbox/`，检查抓取的文章，然后点击 **Add to Obsidian**。
 - **PDF、Markdown 或文本文件：** 通过 Finder、File Explorer 或 file-sync service 把文件复制到 `inbox/`。
+- **Zotero PDF：** 保留在 Zotero `00 Inbox`，使用下方 Zotero 工作流。
 - **直接 URL 或粘贴文本：** 直接提供给 agent，并明确要求 Ingest。
 
 `inbox/` 是资料投递区。不要手动把尚未处理的 source 放进 `wiki/`；agent 会在正确位置创建 canonical raw evidence 和 compiled pages。
@@ -145,6 +146,46 @@ Agent 会通过 manifest 和 hash 识别未处理文件，保留 canonical raw e
 ```
 
 Query 默认不会修改 Vault。如果答案中有值得保留的 durable conclusion，agent 会提出 Promote 建议。
+
+## v2 的 Zotero 工作流（可选）
+
+保留两种入口：PDF／Markdown／文本继续放进 Vault `inbox/`；也可以让 PDF 一直保存在 Zotero，再要求 Zotero ingest。Zotero 管理自己的 PDF 附件，Wiki 管理 compiled notes 和可跨设备使用的来源记录。Web Clipper 的 Markdown 与其他本地 raw 仍在 Vault。五种页面类型及 Standard／Deep／Exhaustive 阅读要求不变。
+
+### 连接与初始化
+
+Mac、Windows 各自配置本机 Zotero adapter。首个接入实现是 [54yyyu/zotero-mcp](https://github.com/54yyyu/zotero-mcp)，采用 `ZOTERO_LOCAL=true`；PDF 扩展支持页面图片。保持 Zotero 打开、允许本地通信，并确保所选附件已下载。电脑上的这份文件属于 Zotero 管理，不是另存到 Vault 的 PDF。移动设备继续用 Zotero 阅读和批注。WebDAV 同步附件、Zotero 账号同步 metadata／批注，都不会替其他电脑安装 MCP。
+
+按照各客户端当前说明注册本地程序，不要顺手运行会修改 Vault `AGENTS.md`／`CLAUDE.md` 的 skill 安装器。Query 只需要读取权限；自动分类另需 Zotero 写入授权。凭据和机器绝对路径不写入 Vault。首次使用前，在 [`_system/zotero-collections.md`](_system/zotero-collections.md) 绑定稳定账号 ID 与实际 collection keys。公开 starter 故意不预填个人绑定；不使用 Zotero 仍可正常运行。
+
+### 日常使用
+
+```text
+请用 Standard Ingest 处理 Zotero 00 Inbox 中的新论文。PDF 留在 Zotero。只分类 Topics 和 Methods，必要时创建含义明确、可复用的新类别；保留 Projects 和 Archive。报告原文链接、hash、实际阅读范围、批注快照、分类变更和未完成事项。
+```
+
+也支持指定论文、collection 或全库发现；全库发现不等于自动全库重分类。PDF hash 在 Zotero 和 Vault 来源之间统一查重。重复 ingest 复用已有知识，但可以补做分类或保存新使用的批注；标题或 DOI 相同不等于文件相同。全库检查先分页读取精简 metadata，再选取需要读原文的文章。
+
+提问时可指定论文、公式、章节或页码。Agent 解析具体附件、校验 hash，然后只读必要上下文；普通 Query 不修改 Vault 或 Zotero。Zotero 不可用时，必须区分此前已编译的内容与尚未重新核验的原文细节。
+
+### 原文链接、快照和版本
+
+Source note 保留附件链接、稳定来源引用、PDF 物理页码、SHA-256 和实际文本／视觉阅读范围。`sources` 继续保存 Vault raw 路径，可选 `source_refs` 引用外部 manifest 记录。点击 Zotero 链接会打开当前附件，但只有 hash 检查才能确认与历史文件快照一致。曾引用的旧版本应作为不同附件保留；Zotero metadata 修订编号不是论文版本。旧附件被覆盖或丢失时，Wiki 能发现问题，但恢复需要原文件或备份。
+
+只把实际用于编译的批注或子 note 保存为 `raw/other/` 下不可覆盖的 Markdown，必要图片保存在 `raw/assets/`。快照区分论文原文、用户评论和 agent 推断；所选内容的查重 hash 不包含捕获时间。快照不等于完整 PDF 备份。Obsidian graph 仍通过 Source 与 Concept／Entity 等知识页的内部链接形成，不需要为了 graph 复制 PDF 或新造页面。
+
+### 分类与失败恢复
+
+Topics 表达研究问题，Methods 表达核心方法。Projects 完全由用户管理，agent 不增删其成员关系或修改其结构；Archive 同样受保护。优先复用既有分类、保留手工归属，允许合理的多重分类。重命名／移动／合并／拆分／删除既有类别，需要先确认具体方案，并复核所有受影响旧文章和子分类。手工结构变更在下次用户触发的 ingest／维护时检查，没有后台 watcher。
+
+编译和分类分别记录状态。先加入并核验目标分类，再移除 Inbox 归属。只有 ingest、批注处理、分类、记账和 lint 均完成，才移除 Inbox；某一步失败就保留待处理状态，重试只补未完成步骤。Zotero Inbox 移除不删除文件，不要求当前设备有 Git；删除 Vault inbox 投递副本仍须满足原有严格条件。非 Git 设备报告待提交状态。分类变化不改变 PDF hash，也不要求重新编译笔记。
+
+Git 只能恢复 Wiki 文本，不能自动撤销 Zotero 分类。操作记录修改前后差异，恢复前核对当前状态并保留其间的人为修改。Vault raw 和 Zotero 原文件都需要独立备份。精确执行条件见 WORKFLOW 第 15–17 节。
+
+### 升级与验收
+
+Manifest v2 保留 v1 raw 记录，新增 `external_sources` 和 `zotero_items`。旧笔记无需批量重写，缺失 `source_refs` 视为空列表。同一篇文章后来进入 Zotero 时，保留旧 raw PDF，建立相同内容的关联，不自动搬迁或删除证据。不伪造历史阅读范围。
+
+本地 hash／链接／manifest 一致性检查与 Zotero 在线可读性分开验收。先做一个小规模真实 Inbox 试点，再扩大使用；明确报告缺失依赖和未实测设备。公开 starter 只含通用协议及空状态。协议可跨 agent 使用，MCP 是可替换访问层，不是持久记忆。
 
 ## 主要操作方式
 
@@ -228,7 +269,7 @@ Research Mode 只对当前会话有效。Merge、rename、delete、重大冲突�
 ### 健康检查
 
 ```text
-请按 v1 WORKFLOW lint 这个 Wiki，报告 broken links、manifest/raw 问题、exact duplicates 和 needs_review 页面。不要自动处理科学冲突。
+请按 v2 WORKFLOW lint 这个 Wiki，报告 broken links、manifest/raw 问题、exact duplicates 和 needs_review 页面。不要自动处理科学冲突。
 ```
 
 ### 查看当前维护状态
@@ -240,9 +281,9 @@ Research Mode 只对当前会话有效。Merge、rename、delete、重大冲突�
 ## 一次 Ingest 会发生什么
 
 ```text
-Source / inbox / URL
+Vault source / inbox / URL OR Zotero attachment
         ↓
-Capture immutable raw + SHA-256 duplicate gate
+Capture Vault raw OR register exact Zotero attachment; SHA-256 duplicate gate
         ↓
 按所选深度读取 source
         ↓
@@ -256,7 +297,8 @@ Validate provenance, links and metadata
         ↓
 Update index, manifest, log and (only if needed) STATE
         ↓
-Commit, then remove only hash-verified untracked inbox copies
+Vault: commit, then verified delivery-copy cleanup
+Zotero: verify Topics/Methods filing, then remove Inbox membership
 ```
 
 修改 1–10 个真正受到影响的页面属于普通 ingest 范围。预计超过 10 页时，agent 会先列出 affected pages 和具体理由，等待确认。页数不是质量目标；每页都必须有 material change。
@@ -359,7 +401,7 @@ Source page 不是每次 ingest 的必然产物。如果来源只强化已有 Co
 
 ### 是否需要 embeddings、vector DB 或 Wiki plugin？
 
-v1 不需要。先使用 index、summary、aliases、`rg`、wikilinks 和 Obsidian search。只有 pilot 后出现可重复的 retrieval failure 才增加工具。
+v2 不需要。先使用 index、summary、aliases、`rg`、wikilinks 和 Obsidian search。只有 pilot 后出现可重复的 retrieval failure 才增加工具。
 
 ### 如何处理很长的书或报告？
 

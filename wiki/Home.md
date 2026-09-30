@@ -9,6 +9,10 @@ This starter Vault is empty. Use this page as the human dashboard after your fir
 >
 > 把资料放入 `inbox/`，然后告诉 agent：“请处理 inbox 里的新资料。”
 
+For Zotero PDFs, configure `_system/zotero-collections.md`, put papers in Zotero `00 Inbox`, and request Zotero Inbox ingest. PDFs stay in Zotero; only Topics/Methods are automatically classified.
+
+Zotero 用户先配置来源及 collection keys，再请求处理 `00 Inbox`；PDF 留在 Zotero，Projects 由用户管理。
+
 ## Current research
 
 - No compiled knowledge yet. / 尚无 compiled knowledge。
@@ -47,7 +51,7 @@ This starter Vault is empty. Use this page as the human dashboard after your fir
 
 - Open a normal knowledge page to inspect Properties such as `type`, `summary`, `sources`, and `needs_review`.
 - Use **Open local graph** on a knowledge page to inspect nearby relationships.
-- Follow inline citations back to `raw/` evidence.
+- Follow inline citations back to `raw/` evidence or an exact Zotero PDF page.
 
 ## System links
 

@@ -10,7 +10,7 @@
 A long-lived personal research knowledge base inspired by Andrej Karpathy's LLM Wiki idea. You choose sources, ask questions, and make final judgments; a replaceable LLM agent continuously compiles raw evidence into a coherent, searchable, and traceable Wiki.
 
 > [!IMPORTANT]
-> **Current status:** This repository is a clean, unused starter template. The v1 structure, real-source workflow, and fresh Codex/Claude Code handoff were validated in a separate private pilot; no pilot sources, compiled knowledge, personal state, or operation history are included here.
+> **Current status:** v2 supports optional Zotero ingest, exact attachment provenance and Topics/Methods filing while preserving the Vault-only workflow. Configure personal bindings before Zotero use; consult STATE for this Vault's verification status.
 
 ## Why use Knowledge Wiki?
 
@@ -21,7 +21,7 @@ The Karpathy-style LLM Wiki idea changes that loop: let an LLM continually compi
 ### What this project adds
 
 - **Knowledge compounds instead of piling up.** A new paper does not automatically become one more isolated summary. The agent searches what the Wiki already knows, updates existing Concepts and Entities, records durable Questions, and creates a cross-source Synthesis only when it adds a real comparison or conclusion.
-- **Every important claim can be checked.** Original PDFs, web snapshots, and other evidence remain under `raw/`. Important numbers, quotations, results, and current facts point back to an exact page, section, figure, table, or snapshot.
+- **Every important claim can be checked.** Vault-delivered PDFs, web snapshots, and other evidence remain under `raw/`; Zotero-delivered PDFs stay in Zotero with registered provenance. Important numbers, quotations, results, and current facts point back to an exact page, section, figure, table, or snapshot.
 - **You choose how deeply a source is read.** Standard Ingest handles everyday material efficiently, Deep Ingest follows the central argument and evidence chain closely, and Exhaustive Ingest supports reproduction, peer review, or section-by-section analysis.
 - **You can ask without polluting the Wiki.** Query is read-only by default. If a discussion produces something worth keeping, Promote compiles only the durable conclusion rather than saving the whole conversation.
 - **The agent is replaceable.** Codex, Claude Code, or another file-based agent can take over from the Vault itself. The durable memory is ordinary Markdown, raw evidence, and small bookkeeping files—not one vendor's chat history or hidden memory.
@@ -85,7 +85,7 @@ Knowledge_Wiki/
 └── .git/                 Local Git history on the designated commit machine
 ```
 
-The separation is deliberate: `inbox/` receives material, `raw/` preserves the evidence, and `wiki/` contains the knowledge compiled from that evidence. `_system/` tells a fresh agent how to perform that work without relying on previous chat context. Actual files under `raw/` and `inbox/` are excluded from Git but remain inside the Vault for file synchronization; their directory markers remain in Git so a new clone has the expected structure. `.git/` is local to the designated commit machine and should not be synchronized by a file-sync service.
+The separation is deliberate: `inbox/` receives material, `raw/` preserves Vault-owned evidence (Zotero attachments stay in Zotero), and `wiki/` contains the knowledge compiled from that evidence. `_system/` tells a fresh agent how to perform that work without relying on previous chat context. Actual files under `raw/` and `inbox/` are excluded from Git but remain inside the Vault for file synchronization; their directory markers remain in Git so a new clone has the expected structure. `.git/` is local to the designated commit machine and should not be synchronized by a file-sync service.
 
 ## Five-minute Quick Start
 
@@ -118,12 +118,13 @@ Read the repository instructions, orient yourself to this Knowledge Wiki, and te
 
 Never let two agents write to the Vault at the same time. A device without `.git/` may ingest and lint, but the designated commit machine should review and commit the synchronized changes later.
 
-### 4. Put the first source in `inbox/`
+### 4. Choose a source entry point
 
 Choose one of these paths:
 
 - **Web article:** open Web Clipper, select this Vault, set the destination folder to `inbox/`, review the captured article, and click **Add to Obsidian**.
 - **PDF, Markdown, or text file:** copy the file into `inbox/` with Finder, File Explorer, or your file-sync service.
+- **Zotero PDF:** keep it in Zotero `00 Inbox` and use the Zotero workflow below.
 - **Direct URL or pasted text:** give it to the agent and explicitly request Ingest.
 
 Use `inbox/` as the delivery area. Do not manually place unprocessed sources under `wiki/`; the agent will create canonical raw evidence and compiled pages in the correct locations.
@@ -147,6 +148,46 @@ According to my Wiki, what are the main differences between Flow Matching and Di
 ```
 
 Query does not modify the Vault by default. If the answer contains a durable conclusion worth keeping, the agent proposes a Promote operation.
+
+## Zotero in v2 (optional)
+
+Choose either entry point: continue putting PDF/Markdown/text into Vault `inbox/`, or keep PDFs in Zotero and ask for Zotero ingest. Zotero owns its PDF attachments; the Wiki owns compiled notes and portable provenance. Web Clipper Markdown and other local raw evidence remain in the Vault. The five page types and Standard/Deep/Exhaustive coverage rules are unchanged.
+
+### Connect and initialize
+
+Use a local Zotero adapter on each Mac/Windows computer. The initial supported implementation is [54yyyu/zotero-mcp](https://github.com/54yyyu/zotero-mcp), configured for local access (`ZOTERO_LOCAL=true`); its PDF extra supports page images. Keep Zotero running with local communication enabled and the selected PDF downloaded. Desktop-local storage is Zotero's managed copy, not an extra Vault PDF. Mobile devices continue to read and annotate through Zotero. WebDAV attachment sync and Zotero account metadata/annotation sync do not install MCP on other computers.
+
+Register the executable with each agent using that client's current instructions. Do not run an installer that edits this Vault's `AGENTS.md`/`CLAUDE.md` incidentally. Read-only access is enough for Query; collection filing additionally needs authorized Zotero writes. Do not put credentials or absolute machine paths in the Vault. Before first use, bind the stable account ID and real collection keys in [`_system/zotero-collections.md`](_system/zotero-collections.md). The public starter's bindings are intentionally unconfigured; Vault-only operation remains available.
+
+### Everyday use
+
+```text
+Use Standard Ingest for new papers in Zotero 00 Inbox. Keep PDFs in Zotero. Classify only Topics and Methods, create a clear reusable missing category when necessary, and preserve Projects and Archive. Report original links, hashes, coverage, snapshots, classification changes and anything unfinished.
+```
+
+Explicit paper/collection/full-library discovery is also supported; full-library discovery is not automatic full-library reclassification. Compare PDF hashes across both Zotero and Vault sources. Repeated ingest reuses compiled knowledge but may finish pending classification or preserve newly used annotations. A new DOI/title match alone does not prove identical bytes. Full-library scans use compact, paginated metadata before selected original reading.
+
+When asking a focused question, specify the paper, equation, section or page. The agent resolves the exact attachment, verifies its hash and reads the needed context; Query changes neither the Vault nor Zotero. If Zotero is unavailable, the answer must distinguish previously compiled coverage from unverified original details.
+
+### Source links, snapshots and versions
+
+Source notes retain attachment links, stable source references, physical PDF page numbers, original SHA-256 and actual reading/visual coverage. `sources` continues to list Vault raw paths; optional `source_refs` points to external manifest records. Clicking a Zotero link opens the current attachment; only an agent's hash check verifies the saved file snapshot. Keep cited old versions as distinct attachments. Zotero metadata revision counters are not publication versions. If an old attachment was overwritten or lost, the Wiki can report the mismatch but needs the original or a backup to recover it.
+
+Only annotations or child notes actually used in compilation are preserved as immutable Markdown in `raw/other/`, with necessary images in `raw/assets/`. Snapshot records distinguish quoted paper text, user comments and agent inference; their selected-content hash ignores capture time. They are not full PDF backups. Source pages remain the nodes linked to Concepts/Entities in Obsidian's graph; an external PDF link does not require another PDF copy or a new graph page.
+
+### Filing and safe recovery
+
+Topics describes the research problem; Methods describes central techniques. Projects is entirely user-managed: never add/remove its memberships or change its structure. Archive is also protected. Prefer existing categories, preserve manual memberships, and allow meaningful cross-category filing. Existing category rename/move/merge/split/delete needs a concrete approved plan with reevaluation of all affected old items and descendants. Detected manual structure changes are reviewed at the next user-triggered maintenance/ingest; there is no background watcher.
+
+Compilation and classification have separate durable states. Add and verify target memberships before removing Inbox membership. Remove Inbox only after completed ingest/annotation handling, classification, bookkeeping and lint. A failed stage leaves Inbox pending; retry only unfinished work. Zotero Inbox removal is non-destructive and does not require Git on the current device, unlike deletion of a Vault inbox delivery copy. Report pending commits on non-Git devices. Classification changes do not change PDF hashes or force new compiled notes.
+
+Git can restore Wiki text, not Zotero collection membership. Log before/after deltas for reviewed recovery and preserve intervening human edits. Back up both Vault raw and Zotero originals independently. See WORKFLOW sections 15–17 for exact gates and authority.
+
+### Upgrade and validation
+
+Manifest v2 preserves v1 raw records and adds `external_sources` and `zotero_items`. Existing notes need no bulk rewrite; absent `source_refs` means an empty list. Keep old raw PDFs even if the same paper later appears in Zotero; associate identical content rather than deleting or moving evidence automatically. Do not invent historical reading coverage.
+
+Validate local hashes/links/manifest references separately from live Zotero availability. Exercise one small real Inbox pilot before broader use; report missing dependencies and untested devices. The public starter contains generic protocol and empty state only. The protocol is portable; MCP is a replaceable access layer, not the source of durable memory.
 
 ## Main operating modes
 
@@ -230,7 +271,7 @@ This question is worth tracking over time. Check whether a related Question page
 ### Run a health check
 
 ```text
-Lint this Wiki according to the v1 WORKFLOW. Report broken links, manifest/raw problems, exact duplicates, and needs_review pages. Do not automatically resolve scientific conflicts.
+Lint this Wiki according to the v2 WORKFLOW. Report broken links, manifest/raw problems, exact duplicates, and needs_review pages. Do not automatically resolve scientific conflicts.
 ```
 
 ### Inspect current maintenance state
@@ -242,9 +283,9 @@ Read _system/STATE.md and the recent log, then tell me what is most worth doing 
 ## What happens during an Ingest?
 
 ```text
-Source / inbox / URL
+Vault source / inbox / URL OR Zotero attachment
         ↓
-Capture immutable raw + SHA-256 duplicate gate
+Capture Vault raw OR register exact Zotero attachment; SHA-256 duplicate gate
         ↓
 Read source at the selected depth
         ↓
@@ -258,7 +299,8 @@ Validate provenance, links, and metadata
         ↓
 Update index, manifest, log, and (only if needed) STATE
         ↓
-Commit, then remove only hash-verified untracked inbox copies
+Vault: commit, then verified delivery-copy cleanup
+Zotero: verify Topics/Methods filing, then remove Inbox membership
 ```
 
 One to ten material page changes are within ordinary ingest authority. If more than ten pages are expected to change, the agent first lists the affected pages and the material reason for each, then waits for confirmation. Page count is not a quality target; every changed page must receive a material update.
@@ -361,7 +403,7 @@ There is no background watcher. During user-triggered maintenance, Lint, Ingest,
 
 ### Do I need embeddings, a vector database, or a Wiki plugin?
 
-Not in v1. Start with the index, summaries, aliases, `rg`, wikilinks, and Obsidian Search. Add retrieval infrastructure only after repeated, documented retrieval failures.
+Not in v2. Start with the index, summaries, aliases, `rg`, wikilinks, and Obsidian Search. Add retrieval infrastructure only after repeated, documented retrieval failures.
 
 ### How should I handle a long book or report?
 
