@@ -55,6 +55,7 @@ Field semantics:
 - `tags`: a small number of broad topic labels. Wiki tags have no controlled taxonomy; Zotero collection rules are separate.
 - `sources`: Vault-relative raw paths such as `raw/papers/example.pdf`, including preserved annotation snapshots. This supports discovery but does not replace claim-level citations.
 - Optional `source_refs`: a list of exact keys in the manifest `external_sources` map. Use it on any page whose claims depend on external evidence, including Concepts and Syntheses. An absent field means an empty list; legacy pages remain valid.
+- Optional `evidence_basis`: `single-source` on a Concept compiled from one source. Remove it once a second independent source is compiled into the page.
 - `status`: ordinary pages are `active`; pages that have been merged or no longer participate in current navigation are `archived`.
 - `needs_review`: set to `true` only for a genuine conflict, material uncertainty, or issue requiring human scientific judgment.
 - `created` / `updated`: creation date and most recent semantic edit date. `updated` does not mean that all facts were reverified.
@@ -100,6 +101,13 @@ A new page must satisfy at least one of these conditions:
 - It is a genuine cross-source synthesis that would be costly to reconstruct later.
 
 Do not create an Entity merely because a source mentions a noun, and do not split every paragraph into a page.
+
+### Single-source Concepts and two-way links
+
+- A Concept does not require two or more sources. Create a Concept from a single source when its subject is a durable research problem or method family that is expected to keep receiving sources, and the page states the compiled problem, routes, and open questions rather than restating one paper. Do not defer such a page until a second or third source arrives.
+- Mark a Concept whose evidence comes from one source with the optional frontmatter field `evidence_basis: single-source`, and remove the field when a second independent source is compiled into it.
+- Not every Source needs its own Concept. Several Sources commonly share one Concept; a Source whose subject already has a Concept joins that Concept instead of creating a parallel one.
+- Links between a Concept and the Sources it compiles or cites are two-way: when a Concept links to a Source, add a link back from that Source's related-pages section stating what the Concept takes from it. A Source that no Concept compiles is a legitimate orphan and may say so in a comment.
 
 ### Source and Raw
 
