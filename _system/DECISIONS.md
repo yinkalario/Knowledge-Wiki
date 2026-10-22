@@ -19,6 +19,7 @@ Raw evidence preserves what a source said, while compiled knowledge should remai
 - Material claims remain traceable to Vault raw or a hash-verified registered Zotero attachment.
 - Source pages compile understanding but do not replace raw evidence.
 - A Concept may be built from a single source when its subject is expected to keep receiving sources; several Sources commonly share one Concept, and Concept–Source links are kept two-way (accepted 2026-10-22).
+- An Entity is created for a named artifact that a Source releases for reuse, or for an artifact that three or more Sources use as evaluation set, baseline, backbone, data, or tool; Entity–Source links are kept two-way (accepted 2026-10-22).
 - Agent memory, cache, session history, and embeddings are disposable.
 
 ## 2. Portable control plane and language

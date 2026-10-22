@@ -55,7 +55,7 @@ Field semantics:
 - `tags`: a small number of broad topic labels. Wiki tags have no controlled taxonomy; Zotero collection rules are separate.
 - `sources`: Vault-relative raw paths such as `raw/papers/example.pdf`, including preserved annotation snapshots. This supports discovery but does not replace claim-level citations.
 - Optional `source_refs`: a list of exact keys in the manifest `external_sources` map. Use it on any page whose claims depend on external evidence, including Concepts and Syntheses. An absent field means an empty list; legacy pages remain valid.
-- Optional `evidence_basis`: `single-source` on a Concept compiled from one source. Remove it once a second independent source is compiled into the page.
+- Optional `evidence_basis`: `single-source` on a Concept or Entity compiled from one source. Remove it once a second independent source is compiled into the page.
 - `status`: ordinary pages are `active`; pages that have been merged or no longer participate in current navigation are `archived`.
 - `needs_review`: set to `true` only for a genuine conflict, material uncertainty, or issue requiring human scientific judgment.
 - `created` / `updated`: creation date and most recent semantic edit date. `updated` does not mean that all facts were reverified.
@@ -100,7 +100,7 @@ A new page must satisfy at least one of these conditions:
 - It has enough independent content that separation clearly improves navigation or reasoning.
 - It is a genuine cross-source synthesis that would be costly to reconstruct later.
 
-Do not create an Entity merely because a source mentions a noun, and do not split every paragraph into a page.
+Do not split every paragraph into a page. Entity thresholds are in the Entities subsection below.
 
 ### Single-source Concepts and two-way links
 
@@ -108,6 +108,14 @@ Do not create an Entity merely because a source mentions a noun, and do not spli
 - Mark a Concept whose evidence comes from one source with the optional frontmatter field `evidence_basis: single-source`, and remove the field when a second independent source is compiled into it.
 - Not every Source needs its own Concept. Several Sources commonly share one Concept; a Source whose subject already has a Concept joins that Concept instead of creating a parallel one.
 - Links between a Concept and the Sources it compiles or cites are two-way: when a Concept links to a Source, add a link back from that Source's related-pages section stating what the Concept takes from it. A Source that no Concept compiles is a legitimate orphan and may say so in a comment.
+
+### Entities
+
+- An Entity page describes one concrete named object: a model family or checkpoint, dataset, benchmark, simulator, tool, software, person, or organization. It holds identity (aliases, canonical URL, proposing paper, release date), dated key facts, and the relationships and evidence that accumulate across Sources. It does not restate the proposing paper's argument; that stays in the Source page. A method's name alone is not an Entity; a method is compiled into a Concept.
+- Create an Entity when a Source releases or establishes a named artifact for reuse by later work (a benchmark, dataset, model, simulator, tool, or library), even when that Source is the only evidence so far. Mark it `evidence_basis: single-source` and remove the field when a second independent Source is compiled into it.
+- Also create an Entity when a named artifact is used as an evaluation set, baseline, backbone, data source, or tool by three or more Source pages, even if no Source is about it. Compile it from the existing Source pages: the Entity records what each Source used it for, what it found, and where Sources disagree.
+- Being mentioned, cited in related work, or listed in a comparison table is not use. Do not create an Entity merely because a source mentions a noun.
+- Entity–Source links are two-way under the same rule as Concepts: when an Entity cites a Source, that Source's related-pages section links back and states what the Entity takes from it. When a new Source uses an artifact that already has an Entity, update that Entity before creating any new page.
 
 ### Source and Raw
 

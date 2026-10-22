@@ -93,7 +93,7 @@ Before reading a source deeply, compare its `content_hash` with `_system/manifes
 10. Check directly related pages and a limited one-hop link cascade; do not traverse the entire graph.
 11. Validate metadata, links, provenance, and freshness.
 12. Update index, manifest, and log. Update STATE only when pending human review or maintenance state changes.
-13. Report disposition, raw path or external source reference, created/updated pages, needs-review items, actual reading scope, snapshots, and any Zotero deltas or pending stages.
+13. Report disposition, raw path or external source reference, created/updated pages by type (state `none` for a type with no change, including Entities), needs-review items, actual reading scope, snapshots, and any Zotero deltas or pending stages.
 
 ### Write scope
 
@@ -115,7 +115,7 @@ Standard Ingest of a paper must still produce a research-usable reading note rat
 3. Trace each key claim to the exact section or page and inspect the supporting equation, figure, table, ablation, or experimental detail.
 4. Visually inspect material pages when layout affects meaning or text extraction is unreliable. Do not render every page by default.
 5. Apply the adaptive SCHEMA rule to retain necessary equations, variable definitions, assumptions, experimental setup, results, and limitations. There is no equation or figure quota.
-6. Create a Source page when the paper has continuing research value, then apply update-before-create to a small number of Concept, Entity, Question, or Synthesis pages.
+6. Create a Source page when the paper has continuing research value, then apply update-before-create to a small number of Concept, Entity, Question, or Synthesis pages. Check Concepts and Entities as separate questions: does the paper compile into a research problem or method family, and does it release or use a named artifact that meets the Entity threshold in SCHEMA section 5?
 7. Report actual reading scope, visual-inspection scope, and any important appendix or supplementary material that was not checked.
 
 Token-aware Standard Ingest reduces redundant reading and irrelevant expansion. It does not sacrifice the evidence chain or research detail behind the central claim.
@@ -318,7 +318,7 @@ The initial adapter is `54yyyu/zotero-mcp` in local mode. Protocol semantics do 
 4. Resolve the machine-local file through Zotero, mechanically hash it, and compare both manifest source maps before deep reading. If it is not downloaded, request/perform the ordinary authorized Zotero download if the available interface supports it; otherwise leave it pending. Never install a separate WebDAV mirror or save NAS credentials in the Vault.
 5. Apply the chosen Standard/Deep/Exhaustive coverage rules. Use outlines and bounded page ranges, inspect central equations/tables visually where necessary, and save actual coverage. If an MCP reader is missing a dependency or fails, use a verified local API/attachment path and available PDF tools. Never modify the Zotero database or guess storage paths from titles. Temporary rendering/extraction belongs in OS scratch, not canonical raw.
 6. Read the selected attachment's annotations and relevant child notes. Preserve used content per SCHEMA section 11. Zero annotations is a valid result; an error or truncated response is not. Annotation-only updates may reuse existing PDF compilation after identity/hash verification.
-7. Check the PDF hash again before finalizing new compilation; changed bytes invalidate the current reading snapshot. Search the Wiki and update before create. Persist the source record, knowledge, snapshots, index/log and bounded pending state. No material and exact duplicates are valid completed ingest dispositions.
+7. Check the PDF hash again before finalizing new compilation; changed bytes invalidate the current reading snapshot. Search the Wiki and update before create. For a batch, run Concept integration and Entity integration as two separate passes over the whole batch and record both in the log, naming `none` when a pass creates or updates nothing. Persist the source record, knowledge, snapshots, index/log and bounded pending state. No material and exact duplicates are valid completed ingest dispositions.
 8. Run offline lint, then classification under section 16. Read back external changes. Report compilation, annotation handling, classification and Inbox completion separately.
 
 A batch is processed serially. One paper's failure does not authorize unverified writes for it or force rereading already completed papers. Resume from durable state, not chat memory. Group libraries, item merge/delete, attachment replacement, metadata rewriting, annotation writes, and automatic tagging are outside ordinary v2 ingest authority.
