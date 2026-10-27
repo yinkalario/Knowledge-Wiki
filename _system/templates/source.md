@@ -29,8 +29,8 @@ figure, or table quota; compile details according to material value and mode.
 - Canonical URL:
 - DOI / arXiv ID:
 - Version / status:
-- Original evidence / exact external source reference:
-- PDF attachment link / content hash:
+- Original evidence / exact external source reference (manifest key, not a link):
+- Zotero locate-item link (`zotero://select/library/items/ITEM`) / open-PDF link (`zotero://open-pdf/library/items/ATTACHMENT`) / content hash:
 
 ## Reading coverage
 

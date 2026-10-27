@@ -41,7 +41,7 @@ Knowledge Wiki 把论文、文章和研究讨论编译成持续维护、可以�
 
 Zotero 管理文献 metadata、阅读、批注和附件；Obsidian 展示 Markdown Wiki，并可抓取非 PDF 来源；agent 维护知识并在需要时核查原文。Collection 是文章的组织归属，不是 PDF 副本，同一篇文章可以属于多个 collection。
 
-Source note 会包含 `zotero://open-pdf/library/items/ATTACHMENT_KEY?page=7` 这样的链接，Obsidian 可交给已安装的 Zotero 打开。链接打开的是**当前附件**；记录的 SHA-256 才能让 agent 判断实际文件是否与引用版本一致。被引用的旧版本应保留为独立附件。Collection 的变化不参与 PDF hash 计算。Obsidian Graph 使用 Wiki 内部链接，外部 Zotero URL 本身不是 graph 节点。
+Source note 会包含定位条目的链接（`zotero://select/library/items/ITEM_KEY`）和 `zotero://open-pdf/library/items/ATTACHMENT_KEY?page=7` 这样的附件链接，Obsidian 可交给已安装的 Zotero 打开。旁边的 `zotero:user:...` 标识串是 manifest 登记键，不是链接。open-pdf 链接打开的是**当前附件**；记录的 SHA-256 才能让 agent 判断实际文件是否与引用版本一致。被引用的旧版本应保留为独立附件。Collection 的变化不参与 PDF hash 计算。Obsidian Graph 使用 Wiki 内部链接，外部 Zotero URL 本身不是 graph 节点。
 
 不要求向量数据库、embedding 订阅、watcher 或定时 ingest。Standard Ingest 先检索已有摘要与知识页，再读取任务所需原文；Deep 和 Exhaustive 必须明确选择。
 
