@@ -1,6 +1,6 @@
-# Codex Adapter — Knowledge_Wiki
+# Agent Instructions — Knowledge_Wiki
 
-This file is a thin entrypoint for Codex. The authoritative, vendor-neutral protocol lives in `_system/`.
+This file is the single thin entrypoint for every coding agent, including Codex and Claude Code. The authoritative, vendor-neutral protocol lives in `_system/`. `CLAUDE.md` only imports this file; edit this file, never add agent-specific rules elsewhere.
 
 ## Authority
 
@@ -25,7 +25,7 @@ This file is a thin entrypoint for Codex. The authoritative, vendor-neutral prot
 - Update existing knowledge before creating pages.
 - Keep raw evidence separate from compiled Wiki knowledge.
 - Use Vault-relative paths for Vault files; use registered stable identities for Zotero evidence. Never persist machine-local attachment paths.
-- Do not depend on Codex conversation history, memory, cache, embeddings, or unregistered files outside the Vault. Registered Zotero attachments are the explicit external-evidence exception.
+- Do not depend on agent conversation history, memory, hooks, cache, embeddings, or unregistered files outside the Vault. Registered Zotero attachments are the explicit external-evidence exception.
 - Do not write concurrently with another agent.
 - Obtain user confirmation for more than 10 planned page changes, merge, rename, delete, major epistemic conflict, or schema change. The only delete exception is verified cleanup of untracked inbox delivery copies under `WORKFLOW.md`.
 - Report created/updated files, validation results, review items, and remaining limitations.

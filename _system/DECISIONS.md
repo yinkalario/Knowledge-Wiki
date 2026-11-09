@@ -27,7 +27,7 @@ Raw evidence preserves what a source said, while compiled knowledge should remai
 **Decision**
 
 - Keep the vendor-neutral protocol inside the Vault.
-- Use `_system/SCHEMA.md` and `_system/WORKFLOW.md` as the authoritative control plane; keep `AGENTS.md` and `CLAUDE.md` as thin adapters.
+- Use `_system/SCHEMA.md` and `_system/WORKFLOW.md` as the authoritative control plane; keep `AGENTS.md` as the single thin agent entrypoint, with `CLAUDE.md` containing only the import line `@AGENTS.md` (accepted 2026-11-09), so one file serves Codex, Claude Code, and other agents.
 - Use English for system protocol and operational prose.
 - Let the current user prompt determine Wiki body language: a prompt containing Chinese uses Chinese, while an English-only prompt uses English, unless the user explicitly requests another language.
 - Preserve canonical English technical terms, identifiers, paper titles, model names, dataset names, and genuine multilingual aliases.

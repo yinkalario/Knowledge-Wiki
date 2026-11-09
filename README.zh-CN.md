@@ -55,7 +55,7 @@ Source note 会包含定位条目的链接（`zotero://select/library/items/ITEM
 |---|---|
 | 没有本机工具的 ChatGPT／Claude 聊天 | 读取／粘贴 README，生成适合你的步骤，由你执行本机操作。 |
 | 本地 Codex 桌面版／CLI | 授予 workspace 和执行权限，通过 `AGENTS.md` 接入；按第 4 步配置 MCP，执行共同验收。 |
-| 本地 Claude Code | 授予 workspace 和执行权限，通过 `CLAUDE.md` 接入；按第 5 步配置 MCP，执行同一套验收。 |
+| 本地 Claude Code | 授予 workspace 和执行权限，通过 `CLAUDE.md` 读取 `AGENTS.md`；按第 5 步配置 MCP，执行同一套验收。 |
 | Claude Desktop | 按第 5 步连接 Zotero；写 Wiki 和安装程序还需要相应的本机文件／执行工具，委托前先确认权限。 |
 
 Codex 和 Claude Code 是平等的维护入口，共用 `_system/` 协议、来源身份、模板和 manifest，不需要互相移交聊天历史。客户端配置格式不同：不要把 Codex TOML 粘进 Claude JSON，反之亦然。参见 [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp) 和 [Claude Code MCP](https://code.claude.com/docs/en/mcp)。
@@ -72,7 +72,7 @@ Vault：<现有文件夹或希望新建的位置>
 是否使用 Zotero：<是 / 否>
 
 先确认你是否能访问本机文件、终端和 MCP。没有这些权限时，给我准确的手动步骤，
-不要声称已经执行。Codex 读取 AGENTS.md，Claude Code 读取 CLAUDE.md，均遵守
+不要声称已经执行。所有 agent 都读取 AGENTS.md（Claude Code 经由 CLAUDE.md），均遵守
 _system 权威协议。按 README 中目标客户端的对应章节配置，不要把当前解释步骤的聊天
 客户端与目标客户端混淆。若要求同时配置两者，分别注册并验收，无需重复安装 tool。
 修改前检查已安装程序与现有配置，复用可用组件。修改客户端配置前先备份，再定向合并，
@@ -105,7 +105,7 @@ _system/zotero-collections.md。复用已有 roots；缺失或含义不明时先
    Clone 后的 `origin` 仍指向公开 starter，并不是你的个人备份仓库。推送个人内容前，先配置自己的 private repository。ZIP 用户也可以先不使用 Git，以后再初始化私有仓库。
 3. 在 Obsidian 中选择 **Open folder as vault**，打开同时包含 `_system/`、`wiki/`、`raw/`、`inbox/` 和 adapters 的整个根目录。
 4. 安装并登录本地客户端：[Codex](https://learn.chatgpt.com/docs/quickstart) 或 [Claude Code](https://code.claude.com/docs/en/overview)。把 Vault 根目录添加／打开为本地 workspace。云端 checkout 不会自动连接到你电脑上的 Zotero。
-5. 对 agent 说：“读取仓库 instructions，了解这个 Wiki，先不要修改文件。”Codex 通过 `AGENTS.md`，Claude Code 通过 `CLAUDE.md` 接入，共同遵守 `_system/`。
+5. 对 agent 说：“读取仓库 instructions，了解这个 Wiki，先不要修改文件。”两种客户端都读取 `AGENTS.md`（Claude Code 经由只导入它的 `CLAUDE.md`），共同遵守 `_system/`。
 
 已有 Vault 不要直接用 starter 全量覆盖，必须保留原有知识、raw、manifest 和状态。**不使用 Zotero 时，跳过第 2–8 步，直接使用第 9 步的 Vault 入口。**
 
@@ -436,7 +436,8 @@ Knowledge_Wiki/
 ├── inbox/                Vault 投递区，含 attachments/
 ├── assets/               Wiki 自身的品牌／素材
 ├── .obsidian/            共用浏览设置
-├── AGENTS.md / CLAUDE.md  客户端薄入口
+├── AGENTS.md            唯一的 agent 薄入口
+├── CLAUDE.md            仅一行 `@AGENTS.md`，供 Claude Code 使用
 └── README*.md            人类设置与使用指南
 ```
 
@@ -617,7 +618,7 @@ Codex 和 Claude Code 都可以维护本 Wiki，但同一时间只能有一个 c
 1. 等待当前 agent 完成并检查 diff；
 2. 如果使用 file-sync service，先确认同步完成；
 3. 在另一 agent 中打开同一 Vault；
-4. 让它读取自己的 adapter 和 `_system` 权威文件；
+4. 让它读取 `AGENTS.md` 和 `_system` 权威文件；
 5. 不需要迁移旧 conversation、cache、memory 或 embeddings。
 
 未来 agent 只要能读写普通文件、搜索 Markdown 并遵守 `_system` 协议，也可以接管。
@@ -681,7 +682,7 @@ v2 不需要。先使用 index、summary、aliases、`rg`、wikilinks 和 Obsidi
 对外分享时，应从个人 Vault 导出独立 starter template，仅包含：
 
 - `README.md` 与 `README.zh-CN.md`；
-- `AGENTS.md` / `CLAUDE.md`；
+- `AGENTS.md` 与仅一行的 `CLAUDE.md`；
 - `_system` protocol 和 templates；
 - 空目录；
 - 自有、合成或明确允许分享的示例。

@@ -55,7 +55,7 @@ You can give [this English README](https://github.com/yinkalario/Knowledge-Wiki/
 |---|---|
 | ChatGPT or Claude chat without local tools | Read/paste the README, ask for tailored instructions, and perform local steps yourself. |
 | Local Codex desktop/CLI | Grant workspace and execution access; use `AGENTS.md`, step 4 for MCP, and the common acceptance checks. |
-| Local Claude Code | Grant workspace and execution access; use `CLAUDE.md`, step 5 for MCP, and the same acceptance checks. |
+| Local Claude Code | Grant workspace and execution access; use `AGENTS.md` (through `CLAUDE.md`), step 5 for MCP, and the same acceptance checks. |
 | Claude Desktop | Connect Zotero using step 5. Wiki writes and installation additionally require suitable local file/execution tools; verify access before delegating. |
 
 Codex and Claude Code are equal maintenance entrypoints: both use the same `_system/` protocol, source identities, templates and manifest. They do not need each other's chat history. Their client configurations differ; do not paste Codex TOML into Claude JSON or vice versa. See [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp) and [Claude Code MCP](https://code.claude.com/docs/en/mcp).
@@ -73,7 +73,7 @@ Use Zotero: <yes / no>
 
 First establish whether you have local filesystem, terminal, and MCP access. If not,
 give me the exact manual steps and do not claim to have performed them.
-For Codex read AGENTS.md; for Claude Code read CLAUDE.md. Both must follow the
+Every agent reads AGENTS.md (Claude Code through CLAUDE.md). Both must follow the
 authoritative _system files. Configure the target client using its own instructions
 in this README, not the client currently explaining them. If both local clients
 are requested, register and verify each independently; do not install the tool twice.
@@ -114,7 +114,7 @@ Ordinary ChatGPT web developer-mode connections use a remote MCP endpoint, not t
    A clone still has the public starter as `origin`; it is not your personal backup remote. Before publishing your own commits, configure your own private repository. ZIP users can work without Git and initialize a private repository later.
 3. In Obsidian choose **Open folder as vault**, selecting the whole folder containing `_system/`, `wiki/`, `raw/`, `inbox/`, and the adapters.
 4. Install/sign in to your chosen local client: [Codex](https://learn.chatgpt.com/docs/quickstart) or [Claude Code](https://code.claude.com/docs/en/overview). Add/open the Vault root as the local workspace. A cloud checkout is not automatically connected to the Zotero running on your computer.
-5. Ask: “Read the repository instructions and orient yourself to this Wiki. Do not modify files yet.” Codex uses `AGENTS.md`; Claude Code uses `CLAUDE.md`; both obey `_system/`.
+5. Ask: “Read the repository instructions and orient yourself to this Wiki. Do not modify files yet.” Both clients read `AGENTS.md` (Claude Code through a `CLAUDE.md` that only imports it) and obey `_system/`.
 
 Do not copy starter files wholesale over an existing Vault: keep its knowledge, raw, manifest and state. **Without Zotero, skip steps 2–8 and use the Vault entry in step 9.**
 
@@ -452,7 +452,8 @@ Knowledge_Wiki/
 ├── inbox/                Vault delivery area, including attachments/
 ├── assets/               Wiki branding/assets
 ├── .obsidian/            Shared viewer configuration
-├── AGENTS.md / CLAUDE.md  Thin client adapters
+├── AGENTS.md            Single thin agent entrypoint
+├── CLAUDE.md            One line, `@AGENTS.md`, for Claude Code
 └── README*.md            Human setup and usage guides
 ```
 
@@ -633,7 +634,7 @@ Codex and Claude Code can both maintain this Wiki, but only one may act as the c
 1. Let the current agent finish and inspect its diff.
 2. Wait for your file-sync service, if any, to finish syncing.
 3. Open the same Vault with the other agent.
-4. Let it read its adapter and the authoritative `_system` files.
+4. Let it read `AGENTS.md` and the authoritative `_system` files.
 5. Do not migrate old conversation history, cache, memory, or embeddings.
 
 A future agent can take over as long as it can read and write ordinary files, search Markdown, and follow the `_system` protocol.
@@ -697,7 +698,7 @@ This repository intentionally ships without raw sources, compiled knowledge, per
 For public sharing, export a separate starter template containing only:
 
 - `README.md` and `README.zh-CN.md`;
-- `AGENTS.md` and `CLAUDE.md`;
+- `AGENTS.md` and the one-line `CLAUDE.md`;
 - the `_system` protocol and templates;
 - empty directories;
 - self-authored, synthetic, or clearly redistributable examples.
