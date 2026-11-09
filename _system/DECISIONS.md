@@ -160,6 +160,7 @@ Each file should answer one question without duplicating the same history. Curre
 - Merge, rename, delete, major epistemic conflict, schema change, and more than 10 planned page changes require user confirmation, except verified inbox cleanup.
 - Archive structures, protocol splits, index or manifest sharding, adapter read-order changes, and durable path changes require a concrete proposal and prior approval.
 - No archive or lifecycle infrastructure is introduced before a real need appears.
+- Offline lint is one tracked, read-only, standard-library script, `_system/lint.py` (accepted 2026-11-09), so every agent runs the same checks instead of rewriting them per session. It reports and never repairs, and the protocol stays executable by hand without it.
 
 ## 9. Optional Zotero workflow and bounded collection writes
 

@@ -223,6 +223,16 @@ Research Mode applies only to the current session by default and is never a hidd
 
 v2 lint remains lightweight; separate offline consistency checks from live external-source verification.
 
+### Offline lint script
+
+`_system/lint.py` implements the mechanically decidable offline checks: frontmatter, basename uniqueness, wikilinks and footnotes, two-way Concept/Entity–Source links, index coverage and dates, manifest shape and enumerated values, duplicate targets, raw hashes, page evidence pointers, protected collection scope, and persisted machine-local paths. Run `python3 _system/lint.py` from the Vault root; `--help` lists the options.
+
+- The script is read-only, uses only the Python standard library, and never contacts Zotero. It reports and repairs nothing.
+- `ERROR` marks a violated protocol invariant: resolve it, or report it explicitly, before describing an operation as lint-clean. `WARN` and `INFO` are report-only signals that need judgment.
+- It does not replace the judgment-based checks below or live external verification.
+- Where Python is unavailable, perform the same checks by hand and say so in the report. Record the error and warning counts in the lint log entry.
+- Change the script only together with the rule it encodes.
+
 ### Safe to repair
 
 - Existing pages missing from the index;

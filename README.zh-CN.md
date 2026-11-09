@@ -425,6 +425,7 @@ Knowledge_Wiki/
 │   ├── SCHEMA.md / WORKFLOW.md / DECISIONS.md
 │   ├── zotero-collections.md   个人绑定；starter 未预配置
 │   ├── templates/        五种页面模板
+│   ├── lint.py           离线、只读的一致性检查
 │   └── index.md / manifest.json / STATE.md / log.md
 ├── raw/                  Vault 证据；文件同步与备份，不进入 Git
 │   ├── papers/           从 Vault 投递的 PDF
@@ -526,6 +527,12 @@ Research Mode 只对当前会话有效。Merge、rename、delete、重大冲突�
 
 ```text
 请按 v2 WORKFLOW lint 这个 Wiki，报告 broken links、manifest/raw 问题、exact duplicates 和 needs_review 页面。不要自动处理科学冲突。
+```
+
+你也可以自己运行离线检查。脚本只读取文件，除 Python 3 外不需要任何依赖：
+
+```bash
+python3 _system/lint.py
 ```
 
 ### 查看当前维护状态

@@ -441,6 +441,7 @@ Knowledge_Wiki/
 │   ├── SCHEMA.md / WORKFLOW.md / DECISIONS.md
 │   ├── zotero-collections.md   Personal binding; unconfigured in starter
 │   ├── templates/        Five page templates
+│   ├── lint.py           Offline, read-only consistency checks
 │   └── index.md / manifest.json / STATE.md / log.md
 ├── raw/                  Vault-owned evidence; file sync/backup, not Git
 │   ├── papers/           Vault-delivered PDFs
@@ -542,6 +543,12 @@ This question is worth tracking over time. Check whether a related Question page
 
 ```text
 Lint this Wiki according to the v2 WORKFLOW. Report broken links, manifest/raw problems, exact duplicates, and needs_review pages. Do not automatically resolve scientific conflicts.
+```
+
+You can also run the offline checks yourself. The script only reads files and needs nothing beyond Python 3:
+
+```bash
+python3 _system/lint.py
 ```
 
 ### Inspect current maintenance state
