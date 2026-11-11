@@ -290,7 +290,11 @@ Item classification record fields:
 }
 ```
 
-Classification status is `pending|complete|needs_review|failed`; Inbox status is `present|removed|not_applicable`. Membership values are collection keys. Persist the intended delta and pre-write membership before external changes; append completed before/after deltas to the log before replacing a record for a later operation. `source_refs` names the explicitly selected attachment scope, not every historical attachment under a paper. STATE holds unfinished multi-item migrations, selected item keys, and remaining work; it is not a second manifest.
+Classification status is `pending|complete|needs_review|failed`; Inbox status is `present|removed|not_applicable`. Membership values are collection keys. Persist the intended delta and pre-write membership before external changes; append completed before/after deltas to the log before replacing a record for a later operation. `source_refs` names the explicitly selected attachment scope, not every historical attachment under a paper.
+
+A merged item keeps its record as a tombstone. The optional field `merged_into` holds the `zotero_items` key of the keeper, which must be a registered record that is not itself merged. A tombstone has `classification_status: complete`, `inbox_status: not_applicable`, empty `planned_add`, `planned_remove` and `memberships_after`, its last verified memberships in `memberships_before`, and the merge date and outcome in `reason`. Never plan membership writes for a tombstone. An external record whose attachment was re-parented by the merge takes the keeper's `item_key` and moves from the tombstone's `source_refs` to the keeper's; a record whose attachment went to the Trash with its item keeps its `item_key` and stays in the tombstone's `source_refs`. External keys, hashes and `duplicate_of` never change in a merge. See WORKFLOW section 18.
+
+STATE holds unfinished multi-item migrations, selected item keys, and remaining work; it is not a second manifest.
 
 ### Version, citation, and graph semantics
 

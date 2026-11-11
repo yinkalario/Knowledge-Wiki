@@ -614,6 +614,14 @@ class Lint:
                     self.add("E-MANIFEST", key, "complete but planned_add not in memberships_after: %s" % sorted(add - after))
                 if ib == "removed" and rem & after:
                     self.add("E-MANIFEST", key, "Inbox removed but planned_remove still in memberships_after: %s" % sorted(rem & after))
+            tgt = rec.get("merged_into")
+            if tgt is not None:
+                if not isinstance(tgt, str) or not ITEM_KEY_RE.match(tgt) or tgt == key or tgt not in Z:
+                    self.add("E-MANIFEST", key, "merged_into is not another registered zotero_items key")
+                elif Z[tgt].get("merged_into") is not None:
+                    self.add("E-MANIFEST", key, "merged_into points to an item that is itself merged")
+                if cs != "complete" or ib != "not_applicable" or add or rem or after:
+                    self.add("E-MANIFEST", key, "merged item is not a tombstone (complete, not_applicable, no planned or current memberships)")
             if cfg:
                 if (add | rem) & cfg["protected"]:
                     self.add("E-MANIFEST", key, "planned change touches a protected collection root")

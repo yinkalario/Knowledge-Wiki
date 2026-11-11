@@ -16,7 +16,7 @@ This file is the single thin entrypoint for every coding agent, including Codex 
 
 - Query: read the index, search, then open a small number of relevant pages. Query is read-only by default.
 - Ingest/Promote: read the relevant SCHEMA and WORKFLOW sections, index, and matching manifest record before writing. Standard is the default; Deep and Exhaustive require explicit user selection and must follow their distinct coverage rules.
-- Zotero: read WORKFLOW sections 15–17, SCHEMA section 11, and `_system/zotero-collections.md`. Automatically classify only Topics and Methods; preserve Projects and Archive. Query never writes Zotero.
+- Zotero: read WORKFLOW sections 15–18, SCHEMA section 11, and `_system/zotero-collections.md`. Automatically classify only Topics and Methods; preserve Projects and Archive. Merge duplicate Zotero items only from an approved list. Query never writes Zotero.
 - Maintenance/schema work: also read DECISIONS, STATE, and recent log entries.
 
 ## Non-negotiable boundaries

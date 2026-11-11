@@ -171,6 +171,7 @@ Each file should answer one question without duplicating the same history. Curre
 - Automatically file only within Topics and Methods, and create clear reusable categories within those axes when necessary. Projects are entirely user-managed; Archive is protected.
 - Existing category restructuring requires a concrete approved plan and review of all affected old items, including descendants and broader candidate branches for splits.
 - Compile, inspect annotations, classify, and remove Inbox membership as separately recoverable stages. Duplicate PDF detection skips redundant compilation, not unfinished filing or used annotation changes.
+- Check for duplicate Zotero items at discovery and merge exact duplicates (same PDF bytes) only from a user-approved list, through the recoverable Zotero Trash. The hash gate alone keeps the Wiki free of duplicate knowledge but leaves duplicate items in the library.
 
 **Rationale**
 

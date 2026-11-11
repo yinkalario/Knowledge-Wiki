@@ -34,7 +34,7 @@ Read only the minimum context required by the task.
 
 1. Read the relevant sections of `SCHEMA.md` and this workflow.
 2. Read `_system/index.md`.
-3. Read only the relevant manifest entry. For Zotero, also read sections 15–17 and `_system/zotero-collections.md`; consult SCHEMA section 11 for the data contract.
+3. Read only the relevant manifest entry. For Zotero, also read sections 15–18 and `_system/zotero-collections.md`; consult SCHEMA section 11 for the data contract.
 4. Read STATE and roughly the latest 10 log entries only when resuming unfinished maintenance work.
 
 ### Schema, merge, or maintenance
@@ -46,7 +46,7 @@ Read SCHEMA, WORKFLOW, DECISIONS, STATE, index, and the relevant log entries.
 The user may provide a URL, a file already inside the Vault, pasted text, or material explicitly requested for preservation from a conversation.
 
 - Store URL snapshots in `raw/web/`.
-- Store Vault-delivered PDFs and papers in `raw/papers/`. Zotero-delivered PDFs stay in Zotero under sections 15–17; do not copy them to raw or require a Vault inbox delivery.
+- Store Vault-delivered PDFs and papers in `raw/papers/`. Zotero-delivered PDFs stay in Zotero under sections 15–18; do not copy them to raw or require a Vault inbox delivery.
 - Store conversation evidence that the user explicitly asks to preserve in `raw/conversations/`.
 - Store source-owned images in `raw/assets/`.
 - Store other material in `raw/other/`.
@@ -225,7 +225,7 @@ v2 lint remains lightweight; separate offline consistency checks from live exter
 
 ### Offline lint script
 
-`_system/lint.py` implements the mechanically decidable offline checks: frontmatter, basename uniqueness, wikilinks and footnotes, two-way Concept/Entity–Source links, index coverage and dates, manifest shape and enumerated values, duplicate targets, raw hashes, page evidence pointers, protected collection scope, and persisted machine-local paths. Run `python3 _system/lint.py` from the Vault root; `--help` lists the options.
+`_system/lint.py` implements the mechanically decidable offline checks: frontmatter, basename uniqueness, wikilinks and footnotes, two-way Concept/Entity–Source links, index coverage and dates, manifest shape and enumerated values, duplicate targets, merged-item tombstones, raw hashes, page evidence pointers, protected collection scope, and persisted machine-local paths. Run `python3 _system/lint.py` from the Vault root; `--help` lists the options.
 
 - The script is read-only, uses only the Python standard library, and never contacts Zotero. It reports and repairs nothing.
 - `ERROR` marks a violated protocol invariant: resolve it, or report it explicitly, before describing an operation as lint-clean. `WARN` and `INFO` are report-only signals that need judgment.
@@ -324,6 +324,7 @@ The initial adapter is `54yyyu/zotero-mcp` in local mode. Protocol semantics do 
 
 1. Confirm the active personal library and stable account identity. Do not treat local library IDs or display names as cross-device identity. Use local read-only account metadata when the adapter returns an alias; never expose credentials. Resolve configured Inbox/Topics/Methods by key and verify their current identity/ancestry before writing.
 2. Default to the configured `00 Inbox`. Explicit item, collection, or full-library requests override discovery scope. Paginate to completion within the requested scope, but fetch compact metadata first. Whole-library discovery does not authorize whole-library reclassification. Without a configured unique Inbox, report the missing setup rather than guessing.
+   Before resolving attachments, run the duplicate-item check of section 18 over the discovered items.
 3. Resolve parent and PDF attachment keys. Use the explicitly selected attachment; when only one PDF exists it is the candidate. Multiple indistinguishable versions require clarification. A standalone PDF is valid; do not silently create or reparent metadata. A readable title/abstract without PDF bytes is not a completed PDF ingest.
 4. Resolve the machine-local file through Zotero, mechanically hash it, and compare both manifest source maps before deep reading. If it is not downloaded, request/perform the ordinary authorized Zotero download if the available interface supports it; otherwise leave it pending. Never install a separate WebDAV mirror or save NAS credentials in the Vault.
 5. Apply the chosen Standard/Deep/Exhaustive coverage rules. Use outlines and bounded page ranges, inspect central equations/tables visually where necessary, and save actual coverage. If an MCP reader is missing a dependency or fails, use a verified local API/attachment path and available PDF tools. Never modify the Zotero database or guess storage paths from titles. Temporary rendering/extraction belongs in OS scratch, not canonical raw.
@@ -331,7 +332,7 @@ The initial adapter is `54yyyu/zotero-mcp` in local mode. Protocol semantics do 
 7. Check the PDF hash again before finalizing new compilation; changed bytes invalidate the current reading snapshot. Search the Wiki and update before create. For a batch, run Concept integration and Entity integration as two separate passes over the whole batch and record both in the log, naming `none` when a pass creates or updates nothing. Persist the source record, knowledge, snapshots, index/log and bounded pending state. No material and exact duplicates are valid completed ingest dispositions.
 8. Run offline lint, then classification under section 16. Read back external changes. Report compilation, annotation handling, classification and Inbox completion separately.
 
-A batch is processed serially. One paper's failure does not authorize unverified writes for it or force rereading already completed papers. Resume from durable state, not chat memory. Group libraries, item merge/delete, attachment replacement, metadata rewriting, annotation writes, and automatic tagging are outside ordinary v2 ingest authority.
+A batch is processed serially. One paper's failure does not authorize unverified writes for it or force rereading already completed papers. Resume from durable state, not chat memory. Group libraries, item delete, attachment replacement, metadata rewriting, annotation writes, and automatic tagging are outside ordinary v2 ingest authority. Item merge is allowed only under section 18.
 
 ## 16. Topics/Methods classification and Inbox completion
 
@@ -356,3 +357,17 @@ At user-triggered Zotero ingest/maintenance, compare the current managed Topics/
 5. Record before/after state, completed decisions, unresolved cases and new rule revision; update the baseline only with verified results. External user edits detected later receive a new review plan, not a silent mass migration. Completed classification alone never triggers PDF re-ingest.
 
 Git restores Vault text only. Reversing a Zotero change requires comparing current membership to the logged deltas and applying a reviewed inverse change without undoing intervening manual edits. Missing historic PDF bytes require a Zotero backup or user-provided original; neither a Markdown snapshot nor a hash can recreate them.
+
+## 18. Duplicate Zotero items
+
+The duplicate gate of section 4 prevents duplicate Wiki knowledge. It does not remove a second Zotero item for the same paper; this section does. Zotero does not block importing a paper twice, so duplicates arrive through ordinary use.
+
+1. Detect. At every Zotero discovery, and on request for the whole library, compare the items in scope with each other and with the registered items by DOI, arXiv or other canonical identifier, and normalized title. A match is only a candidate. Do not file a candidate into Topics/Methods and do not remove its Inbox membership before it is resolved.
+2. Verify. Hash the PDF of every candidate. An exact duplicate item is one whose PDF bytes equal a PDF of the item it matches. Same identifier with different bytes is not an exact duplicate: handle it under section 4 as a new file snapshot and do not merge it. An item without a PDF, or with a different item type or conflicting metadata that matters, is listed for the user's decision rather than merged silently.
+3. Propose. List every group with the keeper, the items to merge, their collection memberships, child attachments, notes and annotation counts. The keeper is the item whose attachment holds the completed non-duplicate record that Source pages link; without one, the oldest item. Merging is never automatic: the user approves the listed groups, and that approval covers exactly those groups.
+4. Preserve. Read annotations and child notes of every item to be merged before the merge, under the rules of section 15 step 6. A merge carries the merged item's collections, tags and children onto the keeper; a Projects or Archive membership carried this way preserves the user's own relationship and is reported, not removed. Record the pre-merge snapshot (memberships, children, PDF hashes) in the log entry and the group list in STATE before the first write.
+5. Merge and verify. Use the adapter's merge so that merged items go to the Zotero Trash, which stays recoverable; never empty the Trash and never delete an item or attachment directly. Read back each keeper: it is live, its managed memberships equal the pre-merge memberships plus any carried over, and every merged item is trashed. If the merge carried Inbox onto a keeper whose ingest and classification are already complete, remove that Inbox membership as the usual separate step. Report where every attachment ended up: re-parented to the keeper, or trashed with its item.
+6. Byte-identical PDFs that the merge leaves under one keeper are reported. Moving the redundant copy to the Trash is a separate step that needs its own approval and never touches the attachment that Source pages link.
+7. Bookkeeping follows SCHEMA section 11: tombstone the merged item's classification record with `merged_into`, repoint re-parented attachment records to the keeper, and append a log entry with the before/after state. A merge changes no PDF hash, Source note, compiled knowledge or semantic `updated` date.
+
+Reversal means restoring the items from the Zotero Trash and comparing with the logged snapshot; Git restores only the Vault bookkeeping.

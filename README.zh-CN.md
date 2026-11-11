@@ -387,7 +387,7 @@ Projects／Archive。先添加并核验目标归属，只有编译、批注处�
 
 可以问：“根据 Wiki 解释这篇论文的公式 3，并回到引用页核验。”Query 默认只读，根据 raw 路径或精确外部来源引用找到原文并核对 hash。Zotero 不可用时，必须区分已有 compiled coverage 与无法重新核验的细节。
 
-PDF hash 在 Vault 与 Zotero 来源间统一查重。已完成 ingest 的重复文件复用知识；待完成分类或新使用批注仍可处理。未完成 ingest 续接剩余工作，分类变化不触发 PDF 重新 ingest。分类成功和 Inbox 移除分别记账，失败重试不必全部重来。
+PDF hash 在 Vault 与 Zotero 来源间统一查重。已完成 ingest 的重复文件复用知识；待完成分类或新使用批注仍可处理。未完成 ingest 续接剩余工作，分类变化不触发 PDF 重新 ingest。同一篇论文的第二个 Zotero 条目不会被再次归档：agent 会列出这些重复条目，经你确认后通过 Zotero 回收站合并到原条目。分类成功和 Inbox 移除分别记账，失败重试不必全部重来。
 
 实际使用的批注快照位于 `raw/other/`，包含来源身份、PDF hash、annotation／note keys、定位和内容。Payload hash 不含捕获时间，内容变化时创建新快照。这些快照遵循 Vault raw 的文件同步／备份，**不进入 Git**，也不能恢复丢失的 PDF。详见 [SCHEMA 第 11 节](_system/SCHEMA.md#11-external-evidence-and-backward-compatible-manifest-v2) 和 [WORKFLOW 第 15–17 节](_system/WORKFLOW.md#15-zotero-connection-discovery-and-ingest)。
 
